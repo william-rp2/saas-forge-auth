@@ -24,7 +24,7 @@ export interface ApiError {
 /**
  * Simulates network delay
  */
-const simulateDelay = (ms: number = 1000): Promise<void> => {
+export const simulateDelay = (ms: number = 1000): Promise<void> => {
   return new Promise(resolve => setTimeout(resolve, ms));
 };
 
@@ -80,13 +80,13 @@ export const mockAuth = {
       };
     }
 
-    // Create new user
     const newUser = mockDb.createUser({
       fullName: userData.fullName,
       email: userData.email,
       encryptedPassword: 'hashed_' + userData.password,
       provider: 'email',
       selectedPlan: userData.selectedPlan,
+      roleId: '3', // Default to Client role
     });
 
     // Create associated profile

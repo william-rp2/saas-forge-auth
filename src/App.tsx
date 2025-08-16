@@ -11,6 +11,7 @@ import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
+import AccessManagement from "./pages/admin/AccessManagement";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 
@@ -38,6 +39,7 @@ const App = () => (
             
             {/* Application Routes */}
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/admin/access-management" element={<AccessManagement />} />
             
             {/* Legal Pages */}
             <Route path="/terms" element={<Terms />} />
