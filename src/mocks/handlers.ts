@@ -52,7 +52,7 @@ export const mockAuth = {
       message: 'Login realizado com sucesso',
       user: {
         id: user.id,
-        fullName: user.fullName,
+        name: user.name,
         email: user.email,
         selectedPlan: user.selectedPlan,
       },
@@ -64,7 +64,7 @@ export const mockAuth = {
    * Simulate user registration
    */
   register: async (userData: {
-    fullName: string;
+    name: string;
     email: string;
     password: string;
     selectedPlan: 'basic' | 'pro' | 'enterprise';
@@ -81,7 +81,7 @@ export const mockAuth = {
     }
 
     const newUser = mockDb.createUser({
-      fullName: userData.fullName,
+      name: userData.name,
       email: userData.email,
       encryptedPassword: 'hashed_' + userData.password,
       provider: 'email',
@@ -99,7 +99,7 @@ export const mockAuth = {
       message: 'Cadastro realizado com sucesso! Faça seu login.',
       user: {
         id: newUser.id,
-        fullName: newUser.fullName,
+        name: newUser.name,
         email: newUser.email,
         selectedPlan: newUser.selectedPlan,
       },
@@ -131,7 +131,7 @@ export const mockAuth = {
       message: 'Login com Google realizado com sucesso',
       user: {
         id: 'google_user_1',
-        fullName: 'Usuário Google',
+        name: 'Usuário Google',
         email: 'usuario@google.com',
         selectedPlan: 'basic',
       },

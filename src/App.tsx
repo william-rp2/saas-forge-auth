@@ -41,6 +41,13 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/admin/access-management" element={<AccessManagement />} />
             
+            {/* Settings Routes */}
+            <Route path="/settings" element={<SettingsLayout />}>
+              <Route path="profile" element={<Profile />} />
+              <Route path="security" element={<Security />} />
+              <Route path="preferences" element={<Preferences />} />
+            </Route>
+            
             {/* Legal Pages */}
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />

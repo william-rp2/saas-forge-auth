@@ -172,10 +172,10 @@ export const UsersManager = () => {
                       <div className="flex items-center space-x-3">
                         <Avatar className="h-8 w-8">
                           <AvatarFallback className="text-xs">
-                            {getUserInitials(user.fullName)}
+                            {getUserInitials(user.name)}
                           </AvatarFallback>
                         </Avatar>
-                        <span className="font-medium">{user.fullName}</span>
+                        <span className="font-medium">{user.name}</span>
                       </div>
                     </TableCell>
                     

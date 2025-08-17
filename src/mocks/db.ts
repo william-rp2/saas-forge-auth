@@ -5,12 +5,21 @@
 
 export interface MockUser {
   id: string;
-  fullName: string;
+  name: string; // Changed from fullName for consistency
   email: string;
   encryptedPassword: string;
   provider: 'email' | 'google';
   selectedPlan: 'basic' | 'pro' | 'enterprise';
   roleId: string;
+  birthDate?: string; // New field for birth date
+  cpf?: string; // New field for CPF
+  preferences?: { // New field for user preferences
+    theme: 'light' | 'dark' | 'system';
+    notifications: {
+      productUpdates: boolean;
+      accountActivity: boolean;
+    };
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -18,7 +27,7 @@ export interface MockUser {
 export interface MockProfile {
   id: string;
   userId: string;
-  avatarUrl?: string;
+  avatar?: string; // Changed from avatarUrl
   bio?: string;
   company?: string;
   website?: string;
@@ -133,34 +142,60 @@ export const mockRoles: MockRole[] = [
 export const mockUsers: MockUser[] = [
   {
     id: '1',
-    fullName: 'Usuário Teste',
+    name: 'Usuário Teste',
     email: 'teste@email.com',
     encryptedPassword: 'hashed_123456', // In real app, this would be properly hashed
     provider: 'email',
     selectedPlan: 'pro',
     roleId: '1', // Administrator role
+    birthDate: '1990-01-15',
+    cpf: '123.456.789-10',
+    preferences: {
+      theme: 'system',
+      notifications: {
+        productUpdates: true,
+        accountActivity: true,
+      },
+    },
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
   },
   {
     id: '2',
-    fullName: 'Maria Silva',
+    name: 'Maria Silva',
     email: 'maria@empresa.com',
     encryptedPassword: 'hashed_password',
     provider: 'email',
     selectedPlan: 'pro',
     roleId: '2', // Team Member role
+    birthDate: '1985-06-22',
+    cpf: '987.654.321-00',
+    preferences: {
+      theme: 'light',
+      notifications: {
+        productUpdates: true,
+        accountActivity: false,
+      },
+    },
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
   },
   {
     id: '3',
-    fullName: 'João Santos',
+    name: 'João Santos',
     email: 'joao@cliente.com',
     encryptedPassword: 'hashed_password',
     provider: 'email',
     selectedPlan: 'basic',
     roleId: '3', // Client role
+    birthDate: '1992-11-08',
+    preferences: {
+      theme: 'dark',
+      notifications: {
+        productUpdates: false,
+        accountActivity: true,
+      },
+    },
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
   },
@@ -230,6 +265,22 @@ export const mockDb = {
     if (userIndex !== -1) {
       mockUsers[userIndex].roleId = roleId;
       mockUsers[userIndex].updatedAt = new Date().toISOString();
+      return mockUsers[userIndex];
+    }
+    return undefined;
+  },
+
+  /**
+   * Update user data
+   */
+  updateUser: (userId: string, updates: Partial<Omit<MockUser, 'id' | 'createdAt' | 'updatedAt'>>): MockUser | undefined => {
+    const userIndex = mockUsers.findIndex(user => user.id === userId);
+    if (userIndex !== -1) {
+      mockUsers[userIndex] = {
+        ...mockUsers[userIndex],
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      };
       return mockUsers[userIndex];
     }
     return undefined;
