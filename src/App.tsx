@@ -12,6 +12,10 @@ import Signup from "./pages/auth/Signup";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
 import AccessManagement from "./pages/admin/AccessManagement";
+import SettingsLayout from "./pages/settings/SettingsLayout";
+import Profile from "./pages/settings/Profile";
+import Security from "./pages/settings/Security";
+import Preferences from "./pages/settings/Preferences";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 

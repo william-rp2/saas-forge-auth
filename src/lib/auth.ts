@@ -68,7 +68,7 @@ export const authApi = {
   register: async (data: RegisterData) => {
     if (isMockEnabled()) {
       return mockAuth.register({
-        fullName: data.fullName,
+        name: data.fullName,
         email: data.email,
         password: data.password,
         selectedPlan: data.selectedPlan,
