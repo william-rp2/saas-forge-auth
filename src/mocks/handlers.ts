@@ -87,6 +87,7 @@ export const mockAuth = {
       provider: 'email',
       selectedPlan: userData.selectedPlan,
       roleId: '3', // Default to Client role
+      planId: userData.selectedPlan === 'basic' ? '1' : userData.selectedPlan === 'pro' ? '2' : '3', // Map selectedPlan to planId
     });
 
     // Create associated profile
