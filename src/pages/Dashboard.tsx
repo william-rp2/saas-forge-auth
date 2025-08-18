@@ -27,6 +27,7 @@ import {
   Crown
 } from 'lucide-react';
 import { useEntitlements } from '@/lib/hooks/useEntitlements';
+import AppHeader from '@/components/shared/AppHeader';
 
 /**
  * Dashboard page component - Central hub do SaaS Core
@@ -56,41 +57,11 @@ const Dashboard = () => {
       </Helmet>
 
       <div className="min-h-screen bg-background">
-        {/* Header */}
-        <header className="border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-          <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <Crown className="w-5 h-5 text-primary-foreground" />
-              </div>
-              <h1 className="text-xl font-semibold text-foreground">SaaS Core</h1>
-              {currentPlan && (
-                <Badge variant="secondary">
-                  {currentPlan.name}
-                </Badge>
-              )}
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/settings/profile">
-                  <User className="w-4 h-4 mr-2" />
-                  Perfil
-                </Link>
-              </Button>
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/settings">
-                  <Settings className="w-4 h-4 mr-2" />
-                  Configurações
-                </Link>
-              </Button>
-              <Button variant="ghost" size="sm">
-                <LogOut className="w-4 h-4 mr-2" />
-                Sair
-              </Button>
-            </div>
-          </div>
-        </header>
+        <AppHeader 
+          title="Dashboard" 
+          subtitle="Centro de controle do SaaS Core"
+          showBackButton={false}
+        />
 
         {/* Main Content */}
         <main className="container mx-auto px-4 py-8">

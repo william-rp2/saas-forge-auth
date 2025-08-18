@@ -9,10 +9,11 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import AppHeader from '@/components/shared/AppHeader';
 
 /**
  * Layout administrativo unificado para todas as páginas de gestão
- * Inclui sidebar com navegação e área de conteúdo principal
+ * Inclui header unificado, sidebar com navegação e área de conteúdo principal
  */
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -38,10 +39,24 @@ export default function AdminLayout() {
 
   const isActive = (href: string) => location.pathname === href;
 
+  // Get current page title
+  const currentPage = navigationItems.find(item => item.href === location.pathname);
+  const pageTitle = currentPage ? currentPage.title : 'Administração';
+
   return (
     <div className="min-h-screen bg-background">
+      <AppHeader 
+        title="Administração"
+        subtitle="Gestão completa do sistema"
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Administração', href: '/admin/dashboard' },
+          { label: pageTitle }
+        ]}
+      />
+
       {/* Mobile menu button */}
-      <div className="lg:hidden fixed top-4 left-4 z-50">
+      <div className="lg:hidden fixed top-20 left-4 z-50">
         <Button
           variant="outline"
           size="sm"
@@ -58,16 +73,17 @@ export default function AdminLayout() {
           transform transition-transform duration-300 ease-in-out
           lg:translate-x-0 lg:static lg:inset-0
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          pt-16
         `}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="p-6">
             <h2 className="text-xl font-semibold text-foreground">
-              Administração
+              Menu Administrativo
             </h2>
             <p className="text-sm text-muted-foreground">
-              Gestão do sistema
+              Selecione uma área para gerenciar
             </p>
           </div>
 
@@ -107,8 +123,8 @@ export default function AdminLayout() {
       )}
 
       {/* Main content */}
-      <main className="lg:ml-64 min-h-screen">
-        <div className="p-6 pt-16 lg:pt-6">
+      <main className="lg:ml-64 min-h-screen pt-0">
+        <div className="p-6">
           <Outlet />
         </div>
       </main>
