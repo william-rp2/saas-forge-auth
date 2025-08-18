@@ -11,6 +11,7 @@ export interface MockUser {
   provider: 'email' | 'google';
   selectedPlan: 'basic' | 'pro' | 'enterprise';
   roleId: string;
+  planId: string; // New field for subscription plan
   birthDate?: string; // New field for birth date
   cpf?: string; // New field for CPF
   preferences?: { // New field for user preferences
@@ -31,6 +32,44 @@ export interface MockProfile {
   bio?: string;
   company?: string;
   website?: string;
+}
+
+/**
+ * Entitlements System Interfaces
+ */
+export interface MockPlan {
+  id: string;
+  name: string;
+  price: number;
+  priceDescription: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MockFeature {
+  id: string;
+  key: string; // Unique identifier for the feature
+  name: string;
+  description: string;
+}
+
+export interface MockLimit {
+  id: string;
+  key: string; // Unique identifier for the limit
+  name: string;
+  description: string;
+}
+
+export interface MockPlanFeature {
+  planId: string;
+  featureId: string;
+}
+
+export interface MockPlanLimit {
+  planId: string;
+  limitId: string;
+  value: number;
 }
 
 /**
@@ -136,6 +175,146 @@ export const mockRoles: MockRole[] = [
 ];
 
 /**
+ * Mock plans database
+ */
+export const mockPlans: MockPlan[] = [
+  {
+    id: '1',
+    name: 'Free',
+    price: 0,
+    priceDescription: '/mês',
+    description: 'Plano gratuito para começar',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: '2',
+    name: 'Pro',
+    price: 49.90,
+    priceDescription: '/mês',
+    description: 'Plano profissional com recursos avançados',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: '3',
+    name: 'Enterprise',
+    price: 149.90,
+    priceDescription: '/mês',
+    description: 'Plano corporativo com recursos ilimitados',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  },
+];
+
+/**
+ * Mock features database
+ */
+export const mockFeatures: MockFeature[] = [
+  {
+    id: '1',
+    key: 'advanced-reports',
+    name: 'Relatórios Avançados',
+    description: 'Acesso a relatórios detalhados e analytics',
+  },
+  {
+    id: '2',
+    key: 'api-access',
+    name: 'Acesso à API',
+    description: 'Integração via API REST',
+  },
+  {
+    id: '3',
+    key: 'priority-support',
+    name: 'Suporte Prioritário',
+    description: 'Suporte técnico com prioridade',
+  },
+  {
+    id: '4',
+    key: 'custom-branding',
+    name: 'Marca Personalizada',
+    description: 'Personalização da marca e logotipo',
+  },
+  {
+    id: '5',
+    key: 'unlimited-exports',
+    name: 'Exportações Ilimitadas',
+    description: 'Exportar dados sem limitações',
+  },
+];
+
+/**
+ * Mock limits database
+ */
+export const mockLimits: MockLimit[] = [
+  {
+    id: '1',
+    key: 'max-projects',
+    name: 'Máximo de Projetos',
+    description: 'Número máximo de projetos que podem ser criados',
+  },
+  {
+    id: '2',
+    key: 'max-users',
+    name: 'Máximo de Usuários',
+    description: 'Número máximo de usuários na conta',
+  },
+  {
+    id: '3',
+    key: 'max-storage',
+    name: 'Armazenamento (GB)',
+    description: 'Limite de armazenamento em gigabytes',
+  },
+  {
+    id: '4',
+    key: 'max-api-calls',
+    name: 'Chamadas API/mês',
+    description: 'Número máximo de chamadas à API por mês',
+  },
+];
+
+/**
+ * Mock plan features relationships
+ */
+export const mockPlanFeatures: MockPlanFeature[] = [
+  // Free plan - no features
+  
+  // Pro plan features
+  { planId: '2', featureId: '1' }, // advanced-reports
+  { planId: '2', featureId: '2' }, // api-access
+  
+  // Enterprise plan features (all features)
+  { planId: '3', featureId: '1' }, // advanced-reports
+  { planId: '3', featureId: '2' }, // api-access
+  { planId: '3', featureId: '3' }, // priority-support
+  { planId: '3', featureId: '4' }, // custom-branding
+  { planId: '3', featureId: '5' }, // unlimited-exports
+];
+
+/**
+ * Mock plan limits relationships
+ */
+export const mockPlanLimits: MockPlanLimit[] = [
+  // Free plan limits
+  { planId: '1', limitId: '1', value: 3 },    // max-projects: 3
+  { planId: '1', limitId: '2', value: 1 },    // max-users: 1
+  { planId: '1', limitId: '3', value: 1 },    // max-storage: 1GB
+  { planId: '1', limitId: '4', value: 100 },  // max-api-calls: 100/month
+  
+  // Pro plan limits
+  { planId: '2', limitId: '1', value: 50 },   // max-projects: 50
+  { planId: '2', limitId: '2', value: 10 },   // max-users: 10
+  { planId: '2', limitId: '3', value: 100 },  // max-storage: 100GB
+  { planId: '2', limitId: '4', value: 10000 }, // max-api-calls: 10,000/month
+  
+  // Enterprise plan limits
+  { planId: '3', limitId: '1', value: -1 },   // max-projects: unlimited
+  { planId: '3', limitId: '2', value: -1 },   // max-users: unlimited
+  { planId: '3', limitId: '3', value: 1000 }, // max-storage: 1TB
+  { planId: '3', limitId: '4', value: -1 },   // max-api-calls: unlimited
+];
+
+/**
  * Mock users database
  * Default test user: teste@email.com / 123456
  */
@@ -148,6 +327,7 @@ export const mockUsers: MockUser[] = [
     provider: 'email',
     selectedPlan: 'pro',
     roleId: '1', // Administrator role
+    planId: '2', // Pro plan
     birthDate: '1990-01-15',
     cpf: '123.456.789-10',
     preferences: {
@@ -168,6 +348,7 @@ export const mockUsers: MockUser[] = [
     provider: 'email',
     selectedPlan: 'pro',
     roleId: '2', // Team Member role
+    planId: '2', // Pro plan
     birthDate: '1985-06-22',
     cpf: '987.654.321-00',
     preferences: {
@@ -188,6 +369,7 @@ export const mockUsers: MockUser[] = [
     provider: 'email',
     selectedPlan: 'basic',
     roleId: '3', // Client role
+    planId: '1', // Free plan
     birthDate: '1992-11-08',
     preferences: {
       theme: 'dark',
@@ -411,5 +593,135 @@ export const mockDb = {
    */
   getAllUsers: (): MockUser[] => {
     return [...mockUsers];
+  },
+
+  /**
+   * Entitlements Operations
+   */
+
+  /**
+   * Get all plans
+   */
+  getAllPlans: (): MockPlan[] => {
+    return [...mockPlans];
+  },
+
+  /**
+   * Find plan by ID
+   */
+  findPlanById: (id: string): MockPlan | undefined => {
+    return mockPlans.find(plan => plan.id === id);
+  },
+
+  /**
+   * Create new plan
+   */
+  createPlan: (planData: Omit<MockPlan, 'id' | 'createdAt' | 'updatedAt'>): MockPlan => {
+    const newPlan: MockPlan = {
+      ...planData,
+      id: (mockPlans.length + 1).toString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    mockPlans.push(newPlan);
+    return newPlan;
+  },
+
+  /**
+   * Update plan
+   */
+  updatePlan: (id: string, updates: Partial<Omit<MockPlan, 'id' | 'createdAt' | 'updatedAt'>>): MockPlan | undefined => {
+    const planIndex = mockPlans.findIndex(plan => plan.id === id);
+    if (planIndex !== -1) {
+      mockPlans[planIndex] = {
+        ...mockPlans[planIndex],
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      };
+      return mockPlans[planIndex];
+    }
+    return undefined;
+  },
+
+  /**
+   * Delete plan
+   */
+  deletePlan: (id: string): boolean => {
+    const planIndex = mockPlans.findIndex(plan => plan.id === id);
+    if (planIndex !== -1) {
+      mockPlans.splice(planIndex, 1);
+      return true;
+    }
+    return false;
+  },
+
+  /**
+   * Get all features
+   */
+  getAllFeatures: (): MockFeature[] => {
+    return [...mockFeatures];
+  },
+
+  /**
+   * Get all limits
+   */
+  getAllLimits: (): MockLimit[] => {
+    return [...mockLimits];
+  },
+
+  /**
+   * Get features for a specific plan
+   */
+  getPlanFeatures: (planId: string): MockFeature[] => {
+    const planFeatureIds = mockPlanFeatures
+      .filter(pf => pf.planId === planId)
+      .map(pf => pf.featureId);
+    
+    return mockFeatures.filter(feature => planFeatureIds.includes(feature.id));
+  },
+
+  /**
+   * Get limits for a specific plan
+   */
+  getPlanLimits: (planId: string): Array<MockLimit & { value: number }> => {
+    const planLimitData = mockPlanLimits.filter(pl => pl.planId === planId);
+    
+    return planLimitData.map(pl => {
+      const limit = mockLimits.find(l => l.id === pl.limitId);
+      return {
+        ...limit!,
+        value: pl.value,
+      };
+    });
+  },
+
+  /**
+   * Update plan features
+   */
+  updatePlanFeatures: (planId: string, featureIds: string[]): void => {
+    // Remove existing features for this plan
+    const filteredFeatures = mockPlanFeatures.filter(pf => pf.planId !== planId);
+    mockPlanFeatures.length = 0;
+    mockPlanFeatures.push(...filteredFeatures);
+    
+    // Add new features
+    featureIds.forEach(featureId => {
+      mockPlanFeatures.push({ planId, featureId });
+    });
+  },
+
+  /**
+   * Update plan limits
+   */
+  updatePlanLimits: (planId: string, limits: Array<{ limitId: string; value: number }>): void => {
+    // Remove existing limits for this plan
+    const filteredLimits = mockPlanLimits.filter(pl => pl.planId !== planId);
+    mockPlanLimits.length = 0;
+    mockPlanLimits.push(...filteredLimits);
+    
+    // Add new limits
+    limits.forEach(({ limitId, value }) => {
+      mockPlanLimits.push({ planId, limitId, value });
+    });
   },
 };

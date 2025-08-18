@@ -11,7 +11,11 @@ import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/Dashboard";
 import AccessManagement from "./pages/admin/AccessManagement";
+import PlansPage from "./pages/admin/Plans";
+import PlanEditPage from "./pages/admin/PlanEdit";
 import SettingsLayout from "./pages/settings/SettingsLayout";
 import Profile from "./pages/settings/Profile";
 import Security from "./pages/settings/Security";
@@ -43,7 +47,14 @@ const App = () => (
             
             {/* Application Routes */}
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/admin/access-management" element={<AccessManagement />} />
+            
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="access-management" element={<AccessManagement />} />
+              <Route path="plans" element={<PlansPage />} />
+              <Route path="plans/edit/:id" element={<PlanEditPage />} />
+            </Route>
             
             {/* Settings Routes */}
             <Route path="/settings" element={<SettingsLayout />}>
