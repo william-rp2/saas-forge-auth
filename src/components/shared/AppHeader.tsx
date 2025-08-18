@@ -26,6 +26,7 @@ import {
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useEntitlements } from '@/lib/hooks/useEntitlements';
 import { usePermissions } from '@/lib/hooks/usePermissions';
+import TeamSwitcher from '@/components/features/teams/TeamSwitcher';
 
 interface AppHeaderProps {
   /** Título da página atual */
@@ -106,7 +107,7 @@ export default function AppHeader({
             </Button>
           )}
 
-          {/* Logo + Title */}
+          {/* Logo + TeamSwitcher + Title */}
           <div className="flex items-center space-x-3">
             <Link to="/dashboard" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
@@ -116,6 +117,8 @@ export default function AppHeader({
                 SaaS Core
               </span>
             </Link>
+
+            <TeamSwitcher />
 
             {currentPlan && (
               <Badge variant="secondary" className="hidden md:inline-flex">

@@ -315,6 +315,97 @@ export const mockPlanLimits: MockPlanLimit[] = [
 ];
 
 /**
+ * Teams System Interfaces (Multi-Tenant Architecture)
+ */
+export interface MockTeam {
+  id: string;
+  name: string;
+  ownerId: string; // FK to users.id
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MockTeamMember {
+  teamId: string;
+  userId: string;
+  role: 'OWNER' | 'ADMIN' | 'MEMBER';
+  joinedAt: string;
+}
+
+export interface MockTeamInvitation {
+  id: string;
+  teamId: string;
+  email: string;
+  role: 'ADMIN' | 'MEMBER';
+  status: 'PENDING' | 'ACCEPTED' | 'DECLINED';
+  createdAt: string;
+}
+
+/**
+ * Mock teams database
+ */
+export const mockTeams: MockTeam[] = [
+  {
+    id: '1',
+    name: 'Minha Primeira Equipe',
+    ownerId: '1',
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: '2',
+    name: 'Equipe ABC Corp',
+    ownerId: '2',
+    createdAt: '2024-01-02T00:00:00Z',
+    updatedAt: '2024-01-02T00:00:00Z',
+  },
+];
+
+/**
+ * Mock team members database
+ */
+export const mockTeamMembers: MockTeamMember[] = [
+  {
+    teamId: '1',
+    userId: '1',
+    role: 'OWNER',
+    joinedAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    teamId: '1',
+    userId: '3',
+    role: 'MEMBER',
+    joinedAt: '2024-01-05T00:00:00Z',
+  },
+  {
+    teamId: '2',
+    userId: '2',
+    role: 'OWNER',
+    joinedAt: '2024-01-02T00:00:00Z',
+  },
+  {
+    teamId: '2',
+    userId: '1',
+    role: 'ADMIN',
+    joinedAt: '2024-01-10T00:00:00Z',
+  },
+];
+
+/**
+ * Mock team invitations database
+ */
+export const mockTeamInvitations: MockTeamInvitation[] = [
+  {
+    id: '1',
+    teamId: '1',
+    email: 'novo@membro.com',
+    role: 'MEMBER',
+    status: 'PENDING',
+    createdAt: '2024-01-15T00:00:00Z',
+  },
+];
+
+/**
  * Mock users database
  * Default test user: teste@email.com / 123456
  */
@@ -723,5 +814,148 @@ export const mockDb = {
     limits.forEach(({ limitId, value }) => {
       mockPlanLimits.push({ planId, limitId, value });
     });
+  },
+
+  /**
+   * Teams Operations (Multi-Tenant System)
+   */
+
+  /**
+   * Get all teams where user is a member
+   */
+  getUserTeams: (userId: string): MockTeam[] => {
+    const userTeamIds = mockTeamMembers
+      .filter(member => member.userId === userId)
+      .map(member => member.teamId);
+    
+    return mockTeams.filter(team => userTeamIds.includes(team.id));
+  },
+
+  /**
+   * Create new team
+   */
+  createTeam: (teamData: Omit<MockTeam, 'id' | 'createdAt' | 'updatedAt'>): MockTeam => {
+    const newTeam: MockTeam = {
+      ...teamData,
+      id: (mockTeams.length + 1).toString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    mockTeams.push(newTeam);
+    return newTeam;
+  },
+
+  /**
+   * Find team by ID
+   */
+  findTeamById: (id: string): MockTeam | undefined => {
+    return mockTeams.find(team => team.id === id);
+  },
+
+  /**
+   * Get team members
+   */
+  getTeamMembers: (teamId: string): MockTeamMember[] => {
+    return mockTeamMembers.filter(member => member.teamId === teamId);
+  },
+
+  /**
+   * Add member to team
+   */
+  addTeamMember: (memberData: Omit<MockTeamMember, 'joinedAt'>): MockTeamMember => {
+    const newMember: MockTeamMember = {
+      ...memberData,
+      joinedAt: new Date().toISOString(),
+    };
+    mockTeamMembers.push(newMember);
+    return newMember;
+  },
+
+  /**
+   * Update team member role
+   */
+  updateTeamMemberRole: (teamId: string, userId: string, newRole: 'ADMIN' | 'MEMBER'): MockTeamMember | undefined => {
+    const memberIndex = mockTeamMembers.findIndex(
+      member => member.teamId === teamId && member.userId === userId
+    );
+    
+    if (memberIndex !== -1) {
+      mockTeamMembers[memberIndex].role = newRole;
+      return mockTeamMembers[memberIndex];
+    }
+    return undefined;
+  },
+
+  /**
+   * Remove member from team
+   */
+  removeTeamMember: (teamId: string, userId: string): boolean => {
+    const memberIndex = mockTeamMembers.findIndex(
+      member => member.teamId === teamId && member.userId === userId
+    );
+    
+    if (memberIndex !== -1) {
+      mockTeamMembers.splice(memberIndex, 1);
+      return true;
+    }
+    return false;
+  },
+
+  /**
+   * Get team invitations
+   */
+  getTeamInvitations: (teamId: string, status?: 'PENDING' | 'ACCEPTED' | 'DECLINED'): MockTeamInvitation[] => {
+    let invitations = mockTeamInvitations.filter(invitation => invitation.teamId === teamId);
+    
+    if (status) {
+      invitations = invitations.filter(invitation => invitation.status === status);
+    }
+    
+    return invitations;
+  },
+
+  /**
+   * Create team invitation
+   */
+  createInvitation: (invitationData: Omit<MockTeamInvitation, 'id' | 'createdAt'>): MockTeamInvitation => {
+    const newInvitation: MockTeamInvitation = {
+      ...invitationData,
+      id: (mockTeamInvitations.length + 1).toString(),
+      createdAt: new Date().toISOString(),
+    };
+    mockTeamInvitations.push(newInvitation);
+    return newInvitation;
+  },
+
+  /**
+   * Update invitation status
+   */
+  updateInvitationStatus: (invitationId: string, status: 'ACCEPTED' | 'DECLINED'): MockTeamInvitation | undefined => {
+    const invitationIndex = mockTeamInvitations.findIndex(inv => inv.id === invitationId);
+    
+    if (invitationIndex !== -1) {
+      mockTeamInvitations[invitationIndex].status = status;
+      return mockTeamInvitations[invitationIndex];
+    }
+    return undefined;
+  },
+
+  /**
+   * Check if user has access to team
+   */
+  userHasTeamAccess: (userId: string, teamId: string): boolean => {
+    return mockTeamMembers.some(
+      member => member.userId === userId && member.teamId === teamId
+    );
+  },
+
+  /**
+   * Get user role in team
+   */
+  getUserRoleInTeam: (userId: string, teamId: string): 'OWNER' | 'ADMIN' | 'MEMBER' | null => {
+    const member = mockTeamMembers.find(
+      member => member.userId === userId && member.teamId === teamId
+    );
+    return member ? member.role : null;
   },
 };
