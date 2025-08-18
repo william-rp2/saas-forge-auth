@@ -22,7 +22,10 @@ import Security from "./pages/settings/Security";
 import Preferences from "./pages/settings/Preferences";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import CreateTeamPage from "./pages/teams/CreateTeam";
 
+import { ThemeProvider } from '@/components/providers/theme-provider';
+import { TeamProvider } from '@/lib/contexts/TeamContext';
 import { initializeMocks } from "@/mocks";
 
 const queryClient = new QueryClient();
@@ -34,43 +37,50 @@ const App = () => (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            
-            {/* Authentication Routes */}
-            <Route path="/auth/login" element={<Login />} />
-            <Route path="/auth/signup" element={<Signup />} />
-            <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-            
-            {/* Application Routes */}
-            <Route path="/dashboard" element={<Dashboard />} />
-            
-            {/* Admin Routes */}
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="access-management" element={<AccessManagement />} />
-              <Route path="plans" element={<PlansPage />} />
-              <Route path="plans/edit/:id" element={<PlanEditPage />} />
-            </Route>
-            
-            {/* Settings Routes */}
-            <Route path="/settings" element={<SettingsLayout />}>
-              <Route path="profile" element={<Profile />} />
-              <Route path="security" element={<Security />} />
-              <Route path="preferences" element={<Preferences />} />
-            </Route>
-            
-            {/* Legal Pages */}
-            <Route path="/terms" element={<Terms />} />
-            <Route path="/privacy" element={<Privacy />} />
-            
-            {/* Catch-all route must be last */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
+        <TeamProvider>
+          <ThemeProvider defaultTheme="system">
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                
+                {/* Authentication Routes */}
+                <Route path="/auth/login" element={<Login />} />
+                <Route path="/auth/signup" element={<Signup />} />
+                <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+                
+                {/* Teams Routes */}
+                <Route path="/teams/create" element={<CreateTeamPage />} />
+                
+                {/* Application Routes */}
+                <Route path="/dashboard" element={<Dashboard />} />
+                
+                {/* Admin Routes */}
+                <Route path="/admin" element={<AdminLayout />}>
+                  <Route path="dashboard" element={<AdminDashboard />} />
+                  <Route path="access-management" element={<AccessManagement />} />
+                  <Route path="plans" element={<PlansPage />} />
+                  <Route path="plans/edit/:id" element={<PlanEditPage />} />
+                </Route>
+                
+                {/* Settings Routes */}
+                <Route path="/settings" element={<SettingsLayout />}>
+                  <Route path="profile" element={<Profile />} />
+                  <Route path="security" element={<Security />} />
+                  <Route path="preferences" element={<Preferences />} />
+                </Route>
+                
+                {/* Legal Pages */}
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/privacy" element={<Privacy />} />
+                
+                {/* Catch-all route must be last */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </ThemeProvider>
+        </TeamProvider>
       </TooltipProvider>
     </QueryClientProvider>
   </HelmetProvider>
