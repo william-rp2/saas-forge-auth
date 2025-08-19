@@ -65,6 +65,7 @@ const App = () => (
                   <Route path="access-management" element={<AccessManagement />} />
                   <Route path="plans" element={<PlansPage />} />
                   <Route path="plans/edit/:id" element={<PlanEditPage />} />
+                  <Route path="products" element={<Products />} />
                 </Route>
                 
                 {/* Settings Routes */}

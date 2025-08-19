@@ -139,6 +139,12 @@ export const mockPermissions: MockPermission[] = [
   
   // Super admin permission
   { id: '22', action: 'manage', subject: 'all', name: 'Acesso Total', description: 'Acesso completo ao sistema' },
+  
+  // Product permissions
+  { id: '23', action: 'create', subject: 'Product', name: 'Criar Produtos', description: 'Permitir criação de novos produtos' },
+  { id: '24', action: 'read', subject: 'Product', name: 'Visualizar Produtos', description: 'Permitir visualização de produtos' },
+  { id: '25', action: 'update', subject: 'Product', name: 'Editar Produtos', description: 'Permitir edição de produtos' },
+  { id: '26', action: 'delete', subject: 'Product', name: 'Excluir Produtos', description: 'Permitir exclusão de produtos' },
 ];
 
 /**
@@ -159,7 +165,7 @@ export const mockRoles: MockRole[] = [
     name: 'Membro da Equipe',
     description: 'Acesso para gerenciar projetos e tarefas',
     color: '#3b82f6',
-    permissionIds: ['1', '2', '3', '5', '6', '7', '10', '19'],
+    permissionIds: ['1', '2', '3', '5', '6', '7', '10', '19', '23', '24', '25', '26'],
     createdAt: '2024-01-01T00:00:00Z',
     updatedAt: '2024-01-01T00:00:00Z',
   },
@@ -271,6 +277,12 @@ export const mockLimits: MockLimit[] = [
     name: 'Chamadas API/mês',
     description: 'Número máximo de chamadas à API por mês',
   },
+  {
+    id: '5',
+    key: 'max-products',
+    name: 'Máximo de Produtos',
+    description: 'Número máximo de produtos que podem ser criados',
+  },
 ];
 
 /**
@@ -312,6 +324,11 @@ export const mockPlanLimits: MockPlanLimit[] = [
   { planId: '3', limitId: '2', value: -1 },   // max-users: unlimited
   { planId: '3', limitId: '3', value: 1000 }, // max-storage: 1TB
   { planId: '3', limitId: '4', value: -1 },   // max-api-calls: unlimited
+  
+  // Products limits for all plans
+  { planId: '1', limitId: '5', value: 5 },    // max-products: 5 (Free)
+  { planId: '2', limitId: '5', value: 100 },  // max-products: 100 (Pro)
+  { planId: '3', limitId: '5', value: -1 },   // max-products: unlimited (Enterprise)
 ];
 
 /**
@@ -957,5 +974,72 @@ export const mockDb = {
       member => member.userId === userId && member.teamId === teamId
     );
     return member ? member.role : null;
+  },
+
+  /**
+   * Products Operations (Multi-Tenant Business Entity)
+   */
+
+  /**
+   * Get products for a specific team (multi-tenant isolation)
+   */
+  getTeamProducts: (teamId: string): MockProduct[] => {
+    return mockProducts.filter(product => product.teamId === teamId);
+  },
+
+  /**
+   * Find product by ID
+   */
+  findProductById: (id: string): MockProduct | undefined => {
+    return mockProducts.find(product => product.id === id);
+  },
+
+  /**
+   * Create new product
+   */
+  createProduct: (productData: Omit<MockProduct, 'id' | 'createdAt' | 'updatedAt'>): MockProduct => {
+    const newProduct: MockProduct = {
+      ...productData,
+      id: (mockProducts.length + 1).toString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    mockProducts.push(newProduct);
+    return newProduct;
+  },
+
+  /**
+   * Update product
+   */
+  updateProduct: (id: string, updates: Partial<Omit<MockProduct, 'id' | 'createdAt' | 'updatedAt'>>): MockProduct | undefined => {
+    const productIndex = mockProducts.findIndex(product => product.id === id);
+    if (productIndex !== -1) {
+      mockProducts[productIndex] = {
+        ...mockProducts[productIndex],
+        ...updates,
+        updatedAt: new Date().toISOString(),
+      };
+      return mockProducts[productIndex];
+    }
+    return undefined;
+  },
+
+  /**
+   * Delete product
+   */
+  deleteProduct: (id: string): boolean => {
+    const productIndex = mockProducts.findIndex(product => product.id === id);
+    if (productIndex !== -1) {
+      mockProducts.splice(productIndex, 1);
+      return true;
+    }
+    return false;
+  },
+
+  /**
+   * Count products for a team (for entitlements checking)
+   */
+  countTeamProducts: (teamId: string): number => {
+    return mockProducts.filter(product => product.teamId === teamId).length;
   },
 };

@@ -3,7 +3,8 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Shield, 
-  CreditCard, 
+  CreditCard,
+  Package,
   Menu,
   X
 } from 'lucide-react';
@@ -34,6 +35,11 @@ export default function AdminLayout() {
       title: 'Planos e Permissões',
       href: '/admin/plans',
       icon: CreditCard,
+    },
+    {
+      title: 'Produtos',
+      href: '/admin/products',
+      icon: Package,
     },
   ];
 
