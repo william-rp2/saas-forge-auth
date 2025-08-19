@@ -423,6 +423,61 @@ export const mockTeamInvitations: MockTeamInvitation[] = [
 ];
 
 /**
+ * Products System Interfaces (Multi-Tenant Business Entity)
+ */
+export interface MockProduct {
+  id: string;
+  name: string;
+  description: string;
+  status: 'ACTIVE' | 'INACTIVE';
+  teamId: string; // FK to teams.id (Multi-tenant isolation)
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Mock products database (isolated by team)
+ */
+export const mockProducts: MockProduct[] = [
+  {
+    id: '1',
+    name: 'Produto Alpha',
+    description: 'Nosso produto principal com recursos avançados',
+    status: 'ACTIVE',
+    teamId: '1', // Belongs to "Minha Primeira Equipe"
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: '2',
+    name: 'Produto Beta',
+    description: 'Versão em desenvolvimento com funcionalidades experimentais',
+    status: 'INACTIVE',
+    teamId: '1', // Belongs to "Minha Primeira Equipe"
+    createdAt: '2024-01-05T00:00:00Z',
+    updatedAt: '2024-01-10T00:00:00Z',
+  },
+  {
+    id: '3',
+    name: 'Solução Enterprise',
+    description: 'Produto corporativo para grandes empresas',
+    status: 'ACTIVE',
+    teamId: '2', // Belongs to "Equipe ABC Corp"
+    createdAt: '2024-01-02T00:00:00Z',
+    updatedAt: '2024-01-02T00:00:00Z',
+  },
+  {
+    id: '4',
+    name: 'Plugin Analytics',
+    description: 'Extensão para análise de dados em tempo real',
+    status: 'ACTIVE',
+    teamId: '2', // Belongs to "Equipe ABC Corp"
+    createdAt: '2024-01-08T00:00:00Z',
+    updatedAt: '2024-01-08T00:00:00Z',
+  },
+];
+
+/**
  * Mock users database
  * Default test user: teste@email.com / 123456
  */
