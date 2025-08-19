@@ -23,6 +23,9 @@ import Preferences from "./pages/settings/Preferences";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import CreateTeamPage from "./pages/teams/CreateTeam";
+import TeamLayout from "./pages/settings/team/TeamLayout";
+import Members from "./pages/settings/team/Members";
+import Invitations from "./pages/settings/team/Invitations";
 
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { TeamProvider } from '@/lib/contexts/TeamContext';
@@ -69,6 +72,10 @@ const App = () => (
                   <Route path="profile" element={<Profile />} />
                   <Route path="security" element={<Security />} />
                   <Route path="preferences" element={<Preferences />} />
+                  <Route path="team" element={<TeamLayout />}>
+                    <Route path="members" element={<Members />} />
+                    <Route path="invitations" element={<Invitations />} />
+                  </Route>
                 </Route>
                 
                 {/* Legal Pages */}
