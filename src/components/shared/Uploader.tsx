@@ -31,6 +31,7 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import { useEntitlements } from '@/lib/hooks/useEntitlements';
+import { useTeams } from '@/lib/contexts/TeamContext';
 import { mockDb } from '@/mocks/db';
 
 export interface UploaderFile {
@@ -102,6 +103,7 @@ export function Uploader({
   const [isDragOver, setIsDragOver] = useState(false);
   const { toast } = useToast();
   const { getLimit } = useEntitlements();
+  const { currentTeamId } = useTeams();
 
   /**
    * Simula o upload de arquivo (mock implementation)
@@ -127,8 +129,12 @@ export function Uploader({
           uploadFile.progress = 100;
           uploadFile.status = 'success';
           
+          // Constrói path com team_id para isolamento multi-tenant
+          const teamPath = currentTeamId ? `team_${currentTeamId}/` : '';
+          const finalPath = `${teamPath}${path}${file.name}`;
+          
           // Simula a URL final do Supabase Storage
-          uploadFile.url = `https://caiunqdrzjlltaeaexqm.supabase.co/storage/v1/object/public/${path}${file.name}`;
+          uploadFile.url = `https://caiunqdrzjlltaeaexqm.supabase.co/storage/v1/object/public/${finalPath}`;
           
           // Simula salvar no mock database (para desenvolvimento)
           console.log('Mock upload saved:', {
@@ -136,6 +142,8 @@ export function Uploader({
             url: uploadFile.url,
             type: file.type,
             size: file.size,
+            teamId: currentTeamId,
+            path: finalPath,
           });
           
           resolve(uploadFile);
@@ -155,7 +163,7 @@ export function Uploader({
         }, 1000);
       }
     });
-  }, [path]);
+  }, [path, currentTeamId]);
 
   /**
    * Verifica se o upload pode ser realizado (storage limits)

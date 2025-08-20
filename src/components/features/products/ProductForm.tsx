@@ -15,8 +15,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useTeams } from '@/lib/contexts/TeamContext';
+import { Uploader, UploaderFile } from '@/components/shared/Uploader';
 import { mockDb, MockProduct } from '@/mocks/db';
 
 /**
@@ -60,6 +62,7 @@ interface ProductFormProps {
  */
 export default function ProductForm({ product, onSave, onCancel }: ProductFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [attachments, setAttachments] = useState<UploaderFile[]>([]);
   const { toast } = useToast();
   const { currentTeamId } = useTeams();
 
@@ -211,6 +214,69 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
             <p className="text-sm text-destructive">
               {form.formState.errors.status.message}
             </p>
+          )}
+        </div>
+
+        <Separator className="my-6" />
+
+        {/* Anexos */}
+        <div className="space-y-4">
+          <div>
+            <Label className="text-base font-semibold">Anexos do Produto</Label>
+            <p className="text-sm text-muted-foreground mt-1">
+              Faça upload de documentos, imagens ou outros arquivos relacionados ao produto
+            </p>
+          </div>
+          
+          <Uploader
+            path="products/"
+            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif"
+            maxFiles={10}
+            maxFileSize={25 * 1024 * 1024} // 25MB
+            onUploadComplete={(files) => {
+              setAttachments(prev => [...prev, ...files]);
+              toast({
+                title: 'Anexos carregados',
+                description: `${files.length} arquivo(s) anexado(s) ao produto.`,
+              });
+            }}
+            onUploadError={(error) => {
+              toast({
+                title: 'Erro no upload',
+                description: error,
+                variant: 'destructive',
+              });
+            }}
+          />
+
+          {/* Lista de anexos atuais */}
+          {attachments.length > 0 && (
+            <div className="mt-4">
+              <Label className="text-sm font-medium">Anexos ({attachments.length})</Label>
+              <div className="mt-2 space-y-2">
+                {attachments.map((file) => (
+                  <div key={file.id} className="flex items-center justify-between p-2 border rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-primary/10 rounded flex items-center justify-center text-xs">
+                        {file.type.startsWith('image/') ? 'IMG' : 'DOC'}
+                      </div>
+                      <span className="text-sm font-medium">{file.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        ({Math.round(file.size / 1024)} KB)
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setAttachments(prev => prev.filter(f => f.id !== file.id))}
+                    >
+                      Remover
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
         </div>
 
