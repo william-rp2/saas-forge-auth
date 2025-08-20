@@ -1,187 +1,106 @@
 /**
- * ProfileForm Component
+ * ProfileForm Component - Formulário de perfil do usuário
  * 
- * Form for editing user profile information including avatar, personal details,
- * and contact information. Includes input masking for CPF field.
+ * Agora integrado com o sistema de Storage para upload de foto de perfil.
+ * Utiliza o componente genérico <Uploader> para gerenciar uploads de avatar.
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { format } from 'date-fns';
-import { CalendarIcon, Upload, User } from 'lucide-react';
-import { cn } from '@/lib/utils';
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Calendar } from '@/components/ui/calendar';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { useToast } from '@/hooks/use-toast';
+import { Uploader, UploaderFile } from '@/components/shared/Uploader';
 import { mockDb } from '@/mocks/db';
 
-/**
- * CPF input mask utility
- */
-const applyCpfMask = (value: string): string => {
-  // Remove all non-numeric characters
-  const numeric = value.replace(/\D/g, '');
-  
-  // Apply mask: 999.999.999-99
-  if (numeric.length <= 3) return numeric;
-  if (numeric.length <= 6) return `${numeric.slice(0, 3)}.${numeric.slice(3)}`;
-  if (numeric.length <= 9) return `${numeric.slice(0, 3)}.${numeric.slice(3, 6)}.${numeric.slice(6)}`;
-  return `${numeric.slice(0, 3)}.${numeric.slice(3, 6)}.${numeric.slice(6, 9)}-${numeric.slice(9, 11)}`;
-};
-
-/**
- * Form validation schema
- */
 const profileSchema = z.object({
-  fullName: z.string()
-    .min(2, 'Nome deve ter pelo menos 2 caracteres')
-    .max(100, 'Nome muito longo'),
-  email: z.string().email('E-mail inválido'),
-  birthDate: z.date().optional(),
-  cpf: z.string()
-    .min(14, 'CPF deve estar completo')
-    .max(14, 'CPF inválido')
-    .regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, 'Formato de CPF inválido')
-    .optional(),
-  avatar: z.string().optional(),
+  name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
+  email: z.string().email('Email inválido'),
+  bio: z.string().optional(),
+  company: z.string().optional(),
+  website: z.string().url('URL inválida').optional().or(z.literal('')),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
 
-interface ProfileFormProps {
-  /** Optional callback when profile is successfully updated */
-  onUpdate?: (data: ProfileFormData) => void;
-}
-
 /**
- * ProfileForm component for editing user profile
- * 
- * @example
- * ```tsx
- * <ProfileForm onUpdate={(data) => console.log('Profile updated:', data)} />
- * ```
+ * Formulário de perfil integrado com Storage
  */
-export const ProfileForm = ({ onUpdate }: ProfileFormProps) => {
+export function ProfileForm() {
   const [isLoading, setIsLoading] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [initialData, setInitialData] = useState<ProfileFormData | null>(null);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const { toast } = useToast();
+
+  // Busca dados do usuário mockado
+  const currentUser = mockDb.findUserById('1'); // Mock user ID
+  const currentProfile = mockDb.findProfileByUserId('1');
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      fullName: '',
-      email: '',
-      birthDate: undefined,
-      cpf: '',
-      avatar: '',
+      name: currentUser?.name || '',
+      email: currentUser?.email || '',
+      bio: currentProfile?.bio || '',
+      company: currentProfile?.company || '',
+      website: currentProfile?.website || '',
     },
   });
 
-  const { watch, reset } = form;
-  const watchedValues = watch();
-
   /**
-   * Load user data on component mount
+   * Manipula o upload do avatar
    */
-  useEffect(() => {
-    const loadUserData = () => {
-      // Get current user (in real app, from auth context)
-      const currentUser = mockDb.findUserById('1');
-      const profile = mockDb.findProfileByUserId('1');
+  const handleAvatarUpload = (files: UploaderFile[]) => {
+    if (files.length > 0) {
+      const uploadedFile = files[0];
+      setAvatarUrl(uploadedFile.url);
       
+      // Atualiza o usuário mockado com a nova URL do avatar
       if (currentUser) {
-        const userData: ProfileFormData = {
-          fullName: currentUser.name,
-          email: currentUser.email,
-          birthDate: currentUser.birthDate ? new Date(currentUser.birthDate) : undefined,
-          cpf: currentUser.cpf || '',
-          avatar: profile?.avatar || '',
-        };
-        
-        setInitialData(userData);
-        reset(userData);
+        mockDb.updateUser(currentUser.id, {
+          avatarUrl: uploadedFile.url,
+        });
       }
-    };
 
-    loadUserData();
-  }, [reset]);
-
-  /**
-   * Watch for form changes to enable/disable save button
-   */
-  useEffect(() => {
-    if (initialData) {
-      const hasFormChanges = JSON.stringify(watchedValues) !== JSON.stringify(initialData);
-      setHasChanges(hasFormChanges);
+      toast({
+        title: "Avatar atualizado",
+        description: "Sua foto de perfil foi atualizada com sucesso.",
+      });
     }
-  }, [watchedValues, initialData]);
-
-  /**
-   * Handle avatar upload simulation
-   */
-  const handleAvatarUpload = () => {
-    // Simulate file upload
-    toast({
-      title: "Upload de Avatar",
-      description: "Em uma aplicação real, aqui seria implementado o upload de arquivo.",
-    });
   };
 
   /**
-   * Handle form submission
+   * Submissão do formulário
    */
-  const handleSubmit = async (data: ProfileFormData) => {
+  const onSubmit = async (data: ProfileFormData) => {
     setIsLoading(true);
-    
+
     try {
-      // Simulate API call delay
+      // Simula delay de API
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // In real app, this would be an API call to update user profile
-      console.log('Updating profile with data:', data);
-      
-      // Update mock data
-      const updatedUser = mockDb.updateUser('1', {
-        name: data.fullName,
-        birthDate: data.birthDate?.toISOString(),
-        cpf: data.cpf,
+
+      // Atualiza dados do usuário mockado
+      if (currentUser) {
+        mockDb.updateUser(currentUser.id, {
+          name: data.name,
+          email: data.email,
+        });
+      }
+
+      toast({
+        title: "Perfil atualizado",
+        description: "Suas informações foram salvas com sucesso.",
       });
 
-      if (updatedUser) {
-        setInitialData(data);
-        setHasChanges(false);
-        
-        toast({
-          title: "Perfil atualizado!",
-          description: "Suas informações foram salvas com sucesso.",
-        });
-
-        onUpdate?.(data);
-      }
     } catch (error) {
       toast({
-        title: "Erro ao atualizar",
-        description: "Ocorreu um erro ao salvar suas informações. Tente novamente.",
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar as alterações. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -191,166 +110,128 @@ export const ProfileForm = ({ onUpdate }: ProfileFormProps) => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold">Informações do Perfil</h2>
-        <p className="text-muted-foreground">
-          Gerencie suas informações pessoais e dados de contato.
-        </p>
-      </div>
-
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-          {/* Avatar Section */}
+      {/* Avatar Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Foto de Perfil</CardTitle>
+          <CardDescription>
+            Sua foto de perfil será exibida em todo o sistema
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="flex items-center gap-4">
             <Avatar className="w-20 h-20">
-              <AvatarImage src={watchedValues.avatar} alt="Avatar" />
-              <AvatarFallback>
-                <User className="w-8 h-8" />
+              <AvatarImage 
+                src={avatarUrl || currentUser?.avatarUrl} 
+                alt={currentUser?.name} 
+              />
+              <AvatarFallback className="text-lg">
+                {currentUser?.name?.charAt(0)?.toUpperCase() || 'U'}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={handleAvatarUpload}
-                className="gap-2"
-              >
-                <Upload className="w-4 h-4" />
-                Alterar Foto
-              </Button>
-              <p className="text-sm text-muted-foreground mt-1">
-                JPG, PNG ou GIF até 2MB
-              </p>
+            
+            <div className="flex-1">
+              <p className="text-sm font-medium mb-2">Alterar foto</p>
+              <Uploader
+                path="avatars/"
+                accept="image/jpeg,image/png,image/webp"
+                maxFiles={1}
+                maxFileSize={5 * 1024 * 1024} // 5MB
+                onUploadComplete={handleAvatarUpload}
+                className="min-h-0"
+              />
             </div>
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Personal Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FormField
-              control={form.control}
-              name="fullName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome Completo</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Digite seu nome completo" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+      {/* Profile Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Informações Pessoais</CardTitle>
+          <CardDescription>
+            Atualize suas informações de perfil
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome completo</Label>
+                <Input
+                  id="name"
+                  {...form.register('name')}
+                  disabled={isLoading}
+                />
+                {form.formState.errors.name && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.name.message}
+                  </p>
+                )}
+              </div>
 
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>E-mail</FormLabel>
-                  <FormControl>
-                    <Input 
-                      placeholder="seu@email.com" 
-                      disabled 
-                      className="bg-muted"
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  {...form.register('email')}
+                  disabled={isLoading}
+                />
+                {form.formState.errors.email && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.email.message}
+                  </p>
+                )}
+              </div>
+            </div>
 
-            <FormField
-              control={form.control}
-              name="birthDate"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Data de Nascimento</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "dd/MM/yyyy")
-                          ) : (
-                            <span>Selecione uma data</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("1900-01-01")
-                        }
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="space-y-2">
+              <Label htmlFor="bio">Biografia</Label>
+              <Textarea
+                id="bio"
+                placeholder="Conte um pouco sobre você..."
+                {...form.register('bio')}
+                disabled={isLoading}
+              />
+            </div>
 
-            <FormField
-              control={form.control}
-              name="cpf"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>CPF</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="000.000.000-00"
-                      value={field.value}
-                      onChange={(e) => {
-                        const maskedValue = applyCpfMask(e.target.value);
-                        field.onChange(maskedValue);
-                      }}
-                      maxLength={14}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="company">Empresa</Label>
+                <Input
+                  id="company"
+                  placeholder="Nome da sua empresa"
+                  {...form.register('company')}
+                  disabled={isLoading}
+                />
+              </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                if (initialData) {
-                  reset(initialData);
-                  setHasChanges(false);
-                }
-              }}
-              disabled={!hasChanges || isLoading}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={!hasChanges || isLoading}
-              className="min-w-[140px]"
-            >
-              {isLoading ? "Salvando..." : "Salvar Alterações"}
-            </Button>
-          </div>
-        </form>
-      </Form>
+              <div className="space-y-2">
+                <Label htmlFor="website">Website</Label>
+                <Input
+                  id="website"
+                  type="url"
+                  placeholder="https://seusite.com"
+                  {...form.register('website')}
+                  disabled={isLoading}
+                />
+                {form.formState.errors.website && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.website.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? 'Salvando...' : 'Salvar alterações'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
-};
+}

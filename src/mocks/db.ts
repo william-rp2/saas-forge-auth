@@ -12,6 +12,7 @@ export interface MockUser {
   selectedPlan: 'basic' | 'pro' | 'enterprise';
   roleId: string;
   planId: string; // New field for subscription plan
+  avatarUrl?: string; // Add avatar URL field
   birthDate?: string; // New field for birth date
   cpf?: string; // New field for CPF
   preferences?: { // New field for user preferences
@@ -283,6 +284,12 @@ export const mockLimits: MockLimit[] = [
     name: 'Máximo de Produtos',
     description: 'Número máximo de produtos que podem ser criados',
   },
+  {
+    id: '6',
+    key: 'storage-limit-mb',
+    name: 'Limite de Armazenamento (MB)',
+    description: 'Limite total de armazenamento em megabytes',
+  },
 ];
 
 /**
@@ -329,6 +336,11 @@ export const mockPlanLimits: MockPlanLimit[] = [
   { planId: '1', limitId: '5', value: 5 },    // max-products: 5 (Free)
   { planId: '2', limitId: '5', value: 100 },  // max-products: 100 (Pro)
   { planId: '3', limitId: '5', value: -1 },   // max-products: unlimited (Enterprise)
+  
+  // Storage limits for all plans
+  { planId: '1', limitId: '6', value: 100 },   // storage-limit-mb: 100MB (Free)
+  { planId: '2', limitId: '6', value: 5000 },  // storage-limit-mb: 5GB (Pro)
+  { planId: '3', limitId: '6', value: 50000 }, // storage-limit-mb: 50GB (Enterprise)
 ];
 
 /**
