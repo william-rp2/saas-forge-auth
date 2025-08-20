@@ -14,7 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      documents: {
+        Row: {
+          created_at: string
+          file_type: string
+          id: string
+          name: string
+          size_in_bytes: number
+          updated_at: string
+          uploader_user_id: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          file_type: string
+          id?: string
+          name: string
+          size_in_bytes: number
+          updated_at?: string
+          uploader_user_id: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          file_type?: string
+          id?: string
+          name?: string
+          size_in_bytes?: number
+          updated_at?: string
+          uploader_user_id?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
