@@ -99,6 +99,23 @@ export interface MockRolePermission {
   permissionId: string;
 }
 
+/**
+ * Notifications System Interfaces
+ */
+export interface MockNotification {
+  id: string;
+  recipientUserId: string;
+  actorUserId?: string;
+  actionType: 'PRODUCT_CREATED' | 'PRODUCT_UPDATED' | 'PRODUCT_DELETED' | 'USER_INVITED' | 'USER_JOINED' | 'TEAM_CREATED' | 'TEAM_UPDATED' | 'DOCUMENT_UPLOADED' | 'PLAN_CHANGED';
+  entityId?: string;
+  entityType?: string;
+  teamId?: string;
+  isRead: boolean;
+  message?: string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
 
 /**
  * Mock permissions database
@@ -448,6 +465,22 @@ export interface MockProduct {
 }
 
 /**
+ * Storage Module Interfaces
+ */
+export interface MockDocument {
+  id: string;
+  name: string;
+  url: string;
+  type: string;
+  size: number;
+  team_id: string; // FK to teams.id (Multi-tenant isolation)
+  uploaded_by: string; // FK to users.id
+  path: string;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
  * Mock products database (isolated by team)
  */
 export const mockProducts: MockProduct[] = [
@@ -486,6 +519,138 @@ export const mockProducts: MockProduct[] = [
     teamId: '2', // Belongs to "Equipe ABC Corp"
     createdAt: '2024-01-08T00:00:00Z',
     updatedAt: '2024-01-08T00:00:00Z',
+  },
+];
+
+/**
+ * Mock documents database (isolated by team)
+ */
+export const mockDocuments: MockDocument[] = [
+  {
+    id: '1',
+    name: 'avatar-user1.jpg',
+    url: 'https://example.com/storage/avatars/avatar-user1.jpg',
+    type: 'image/jpeg',
+    size: 2048576, // 2MB
+    team_id: '1',
+    uploaded_by: '1',
+    path: 'avatars/avatar-user1.jpg',
+    created_at: '2024-01-01T00:00:00Z',
+    updated_at: '2024-01-01T00:00:00Z',
+  },
+  {
+    id: '2',
+    name: 'product-manual.pdf',
+    url: 'https://example.com/storage/documents/product-manual.pdf',
+    type: 'application/pdf',
+    size: 5242880, // 5MB
+    team_id: '1',
+    uploaded_by: '1',
+    path: 'documents/product-manual.pdf',
+    created_at: '2024-01-02T00:00:00Z',
+    updated_at: '2024-01-02T00:00:00Z',
+  },
+  {
+    id: '3',
+    name: 'presentation.pptx',
+    url: 'https://example.com/storage/documents/presentation.pptx',
+    type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    size: 10485760, // 10MB
+    team_id: '2',
+    uploaded_by: '2',
+    path: 'documents/presentation.pptx',
+    created_at: '2024-01-03T00:00:00Z',
+    updated_at: '2024-01-03T00:00:00Z',
+  },
+];
+
+/**
+ * Mock notifications database
+ */
+export const mockNotifications: MockNotification[] = [
+  {
+    id: '1',
+    recipientUserId: '1',
+    actorUserId: '2',
+    actionType: 'PRODUCT_CREATED',
+    entityId: '1',
+    entityType: 'Product',
+    teamId: '1',
+    isRead: false,
+    message: 'Maria Silva criou o produto "Sistema de Gestão"',
+    metadata: {
+      productName: 'Sistema de Gestão',
+      actorName: 'Maria Silva',
+    },
+    createdAt: '2024-01-08T10:30:00Z',
+    updatedAt: '2024-01-08T10:30:00Z',
+  },
+  {
+    id: '2',
+    recipientUserId: '1',
+    actorUserId: '2',
+    actionType: 'DOCUMENT_UPLOADED',
+    entityId: '2',
+    entityType: 'Document',
+    teamId: '1',
+    isRead: true,
+    message: 'Maria Silva enviou o documento "product-manual.pdf"',
+    metadata: {
+      documentName: 'product-manual.pdf',
+      actorName: 'Maria Silva',
+    },
+    createdAt: '2024-01-07T14:20:00Z',
+    updatedAt: '2024-01-07T15:00:00Z',
+  },
+  {
+    id: '3',
+    recipientUserId: '2',
+    actorUserId: '1',
+    actionType: 'USER_INVITED',
+    entityId: '1',
+    entityType: 'Team',
+    teamId: '1',
+    isRead: false,
+    message: 'Você foi convidado para a equipe "Equipe Principal"',
+    metadata: {
+      teamName: 'Equipe Principal',
+      inviterName: 'Admin User',
+    },
+    createdAt: '2024-01-06T09:15:00Z',
+    updatedAt: '2024-01-06T09:15:00Z',
+  },
+  {
+    id: '4',
+    recipientUserId: '1',
+    actionType: 'PLAN_CHANGED',
+    entityId: '2',
+    entityType: 'Plan',
+    teamId: '1',
+    isRead: true,
+    message: 'Plano da equipe foi alterado para Pro',
+    metadata: {
+      planName: 'Pro',
+      previousPlan: 'Free',
+    },
+    createdAt: '2024-01-05T16:45:00Z',
+    updatedAt: '2024-01-05T17:00:00Z',
+  },
+  {
+    id: '5',
+    recipientUserId: '2',
+    actorUserId: '1',
+    actionType: 'PRODUCT_UPDATED',
+    entityId: '2',
+    entityType: 'Product',
+    teamId: '1',
+    isRead: false,
+    message: 'Admin User atualizou o produto "Aplicativo Mobile"',
+    metadata: {
+      productName: 'Aplicativo Mobile',
+      actorName: 'Admin User',
+    },
+    createdAt: '2024-01-04T11:30:00Z',
+    updatedAt: '2024-01-04T11:30:00Z',
   },
 ];
 
@@ -1044,12 +1209,69 @@ export const mockDb = {
   },
 
   /**
-   * Products Operations (Multi-Tenant Business Entity)
+   * Get notifications for user
    */
+  getNotificationsForUser: (userId: string, limit?: number): MockNotification[] => {
+    const userNotifications = mockNotifications
+      .filter(notification => notification.recipientUserId === userId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    
+    return limit ? userNotifications.slice(0, limit) : userNotifications;
+  },
 
   /**
-   * Get products for a specific team (multi-tenant isolation)
+   * Get unread notifications count
    */
+  getUnreadNotificationsCount: (userId: string): number => {
+    return mockNotifications.filter(
+      notification => notification.recipientUserId === userId && !notification.isRead
+    ).length;
+  },
+
+  /**
+   * Mark notification as read
+   */
+  markNotificationAsRead: (notificationId: string): MockNotification | undefined => {
+    const notificationIndex = mockNotifications.findIndex(n => n.id === notificationId);
+    
+    if (notificationIndex !== -1) {
+      mockNotifications[notificationIndex].isRead = true;
+      mockNotifications[notificationIndex].updatedAt = new Date().toISOString();
+      return mockNotifications[notificationIndex];
+    }
+    return undefined;
+  },
+
+  /**
+   * Mark all notifications as read for user
+   */
+  markAllNotificationsAsRead: (userId: string): void => {
+    const now = new Date().toISOString();
+    mockNotifications.forEach(notification => {
+      if (notification.recipientUserId === userId && !notification.isRead) {
+        notification.isRead = true;
+        notification.updatedAt = now;
+      }
+    });
+  },
+
+  /**
+   * Create new notification
+   */
+  createNotification: (notification: Omit<MockNotification, 'id' | 'createdAt' | 'updatedAt'>): MockNotification => {
+    const now = new Date().toISOString();
+    const newNotification: MockNotification = {
+      ...notification,
+      id: (mockNotifications.length + 1).toString(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    
+    mockNotifications.unshift(newNotification);
+    return newNotification;
+  },
+
+  // Products Operations (Multi-Tenant Business Entity)
   getTeamProducts: (teamId: string): MockProduct[] => {
     return mockProducts.filter(product => product.teamId === teamId);
   },
@@ -1109,4 +1331,24 @@ export const mockDb = {
   countTeamProducts: (teamId: string): number => {
     return mockProducts.filter(product => product.teamId === teamId).length;
   },
+
+  /**
+   * Documents array for storage calculations
+   */
+  documents: mockDocuments,
+
+  /**
+   * Teams array for team operations
+   */
+  teams: mockTeams,
+
+  /**
+   * Plans array for plan operations
+   */
+  plans: mockPlans,
+
+  /**
+   * Plan limits array for storage limit checks
+   */
+  plan_limits: mockPlanLimits,
 };

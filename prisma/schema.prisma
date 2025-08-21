@@ -1,0 +1,332 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// AUTHENTICATION & USER MANAGEMENT
+// ============================================================================
+
+model User {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  authUserId    String   @unique @map("auth_user_id") @db.Uuid
+  fullName      String   @map("full_name") @db.VarChar(255)
+  email         String   @unique @db.VarChar(255)
+  provider      String   @default("email") @db.VarChar(50)
+  selectedPlan  String?  @map("selected_plan") @db.VarChar(50)
+  emailVerified Boolean  @default(false) @map("email_verified")
+  isActive      Boolean  @default(true) @map("is_active")
+  avatarUrl     String?  @map("avatar_url") @db.Text // New field for avatar
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  role                    Role?          @relation(fields: [roleId], references: [id])
+  roleId                  String?        @map("role_id") @db.Uuid
+  teamMembers             TeamMember[]
+  documents               Document[]     // Documents uploaded by this user
+  notificationsReceived   Notification[] @relation("NotificationRecipient")
+  notificationsCreated    Notification[] @relation("NotificationActor")
+
+  @@map("users")
+}
+
+// ============================================================================
+// RBAC (Role-Based Access Control)
+// ============================================================================
+
+model Role {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @unique @db.VarChar(100)
+  description String?  @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  users           User[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  action      String   @db.VarChar(50) // 'create', 'read', 'update', 'delete', 'manage'
+  subject     String   @db.VarChar(50) // 'Project', 'Task', 'User', 'Role', 'all', etc.
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  rolePermissions RolePermission[]
+
+  @@unique([action, subject], name: "unique_action_subject")
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String @map("role_id") @db.Uuid
+  permissionId String @map("permission_id") @db.Uuid
+
+  // Relations
+  role       Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+// ============================================================================
+// TEAMS & MULTI-TENANCY
+// ============================================================================
+
+model Team {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @db.VarChar(255)
+  slug        String   @unique @db.VarChar(100)
+  description String?  @db.Text
+  planId      String   @map("plan_id") @db.Uuid
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  plan            Plan[]
+  teamMembers     TeamMember[]
+  teamInvitations TeamInvitation[]
+  products        Product[]
+  documents       Document[]
+  notifications   Notification[]
+
+  @@map("teams")
+}
+
+model TeamMember {
+  id       String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  teamId   String           @map("team_id") @db.Uuid
+  userId   String           @map("user_id") @db.Uuid
+  role     TeamMemberRole   @default(MEMBER)
+  joinedAt DateTime         @default(now()) @map("joined_at") @db.Timestamptz(6)
+
+  // Relations
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@map("team_members")
+}
+
+model TeamInvitation {
+  id        String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  teamId    String                 @map("team_id") @db.Uuid
+  email     String                 @db.VarChar(255)
+  role      TeamMemberRole         @default(MEMBER)
+  status    TeamInvitationStatus   @default(PENDING)
+  token     String                 @unique @db.VarChar(255)
+  expiresAt DateTime               @map("expires_at") @db.Timestamptz(6)
+  createdAt DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("team_invitations")
+}
+
+enum TeamMemberRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum TeamInvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
+}
+
+// ============================================================================
+// PLANS & ENTITLEMENTS
+// ============================================================================
+
+model Plan {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name             String   @unique @db.VarChar(100)
+  description      String?  @db.Text
+  price            Decimal  @db.Decimal(10, 2)
+  priceDescription String   @map("price_description") @db.VarChar(100)
+  isActive         Boolean  @default(true) @map("is_active")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  team         Team?         @relation(fields: [teamId], references: [id])
+  teamId       String?       @map("team_id") @db.Uuid
+  planFeatures PlanFeature[]
+  planLimits   PlanLimit[]
+
+  @@map("plans")
+}
+
+model Feature {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key         String   @unique @db.VarChar(100)
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  planFeatures PlanFeature[]
+
+  @@map("features")
+}
+
+model PlanFeature {
+  planId    String @map("plan_id") @db.Uuid
+  featureId String @map("feature_id") @db.Uuid
+
+  // Relations
+  plan    Plan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  feature Feature @relation(fields: [featureId], references: [id], onDelete: Cascade)
+
+  @@id([planId, featureId])
+  @@map("plan_features")
+}
+
+model Limit {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key         String   @unique @db.VarChar(100)
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  planLimits PlanLimit[]
+
+  @@map("limits")
+}
+
+model PlanLimit {
+  planId  String @map("plan_id") @db.Uuid
+  limitId String @map("limit_id") @db.Uuid
+  value   Int
+
+  // Relations
+  plan  Plan  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  limit Limit @relation(fields: [limitId], references: [id], onDelete: Cascade)
+
+  @@id([planId, limitId])
+  @@map("plan_limits")
+}
+
+// ============================================================================
+// PRODUCTS
+// ============================================================================
+
+model Product {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String        @db.VarChar(255)
+  description String?       @db.Text
+  status      ProductStatus @default(ACTIVE)
+  teamId      String        @map("team_id") @db.Uuid
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  team               Team                @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  productAttachments ProductAttachment[]
+
+  @@map("products")
+}
+
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// ============================================================================
+// STORAGE & DOCUMENTS
+// ============================================================================
+
+model Document {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  filename     String   @db.VarChar(255)
+  originalName String   @map("original_name") @db.VarChar(255)
+  mimeType     String   @map("mime_type") @db.VarChar(100)
+  size         BigInt   @db.BigInt
+  url          String   @db.Text
+  path         String   @db.Text // Storage path with team_id isolation
+  teamId       String   @map("team_id") @db.Uuid
+  uploadedBy   String   @map("uploaded_by") @db.Uuid
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  // Relations
+  team               Team                @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  uploader           User                @relation(fields: [uploadedBy], references: [id])
+  productAttachments ProductAttachment[]
+
+  @@map("documents")
+}
+
+model ProductAttachment {
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  productId  String @map("product_id") @db.Uuid
+  documentId String @map("document_id") @db.Uuid
+
+  // Relations
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, documentId])
+  @@map("product_attachments")
+}
+
+// ============================================================================
+// NOTIFICATIONS
+// ============================================================================
+
+enum NotificationActionType {
+  PRODUCT_CREATED
+  PRODUCT_UPDATED
+  PRODUCT_DELETED
+  USER_INVITED
+  USER_JOINED
+  TEAM_CREATED
+  TEAM_UPDATED
+  DOCUMENT_UPLOADED
+  PLAN_CHANGED
+
+  @@map("notification_action_type")
+}
+
+model Notification {
+  id               String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  recipientUserId  String                  @map("recipient_user_id") @db.Uuid
+  actorUserId      String?                 @map("actor_user_id") @db.Uuid
+  actionType       NotificationActionType  @map("action_type")
+  entityId         String?                 @map("entity_id") @db.Uuid
+  entityType       String?                 @map("entity_type") @db.VarChar(50)
+  teamId           String?                 @map("team_id") @db.Uuid
+  isRead           Boolean                 @default(false) @map("is_read")
+  message          String?                 @db.Text // Optional custom message
+  metadata         Json?                   // Additional data for the notification
+  createdAt        DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  recipient User  @relation("NotificationRecipient", fields: [recipientUserId], references: [id], onDelete: Cascade)
+  actor     User? @relation("NotificationActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  team      Team? @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([recipientUserId, isRead])
+  @@index([recipientUserId, createdAt])
+  @@map("notifications")
+}

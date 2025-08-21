@@ -33,6 +33,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useEntitlements } from '@/lib/hooks/useEntitlements';
 import { useTeams } from '@/lib/contexts/TeamContext';
 import { mockDb } from '@/mocks/db';
+import { uploadFile, uploadAvatar, uploadDocument, uploadProductAttachment } from '@/lib/actions/upload';
 
 export interface UploaderFile {
   id: string;
@@ -106,64 +107,96 @@ export function Uploader({
   const { currentTeamId } = useTeams();
 
   /**
-   * Simula o upload de arquivo (mock implementation)
+   * Realiza upload real para Supabase Storage
    */
-  const simulateUpload = useCallback(async (file: File): Promise<UploaderFile> => {
-    return new Promise((resolve, reject) => {
-      const uploadFile: UploaderFile = {
-        id: Math.random().toString(36),
-        name: file.name,
-        url: URL.createObjectURL(file),
-        type: file.type,
-        size: file.size,
-        status: 'uploading',
-        progress: 0,
-      };
+  const performUpload = useCallback(async (file: File): Promise<UploaderFile> => {
+    const uploadFile: UploaderFile = {
+      id: Math.random().toString(36),
+      name: file.name,
+      url: '',
+      type: file.type,
+      size: file.size,
+      status: 'uploading',
+      progress: 0,
+    };
 
-      // Simula progress do upload
-      const interval = setInterval(() => {
-        uploadFile.progress += Math.random() * 30;
-        
-        if (uploadFile.progress >= 100) {
-          clearInterval(interval);
-          uploadFile.progress = 100;
-          uploadFile.status = 'success';
-          
-          // Constrói path com team_id para isolamento multi-tenant
-          const teamPath = currentTeamId ? `team_${currentTeamId}/` : '';
-          const finalPath = `${teamPath}${path}${file.name}`;
-          
-          // Simula a URL final do Supabase Storage
-          uploadFile.url = `https://caiunqdrzjlltaeaexqm.supabase.co/storage/v1/object/public/${finalPath}`;
-          
-          // Simula salvar no mock database (para desenvolvimento)
-          console.log('Mock upload saved:', {
-            name: file.name,
-            url: uploadFile.url,
-            type: file.type,
-            size: file.size,
-            teamId: currentTeamId,
-            path: finalPath,
-          });
-          
-          resolve(uploadFile);
-        }
-        
+    try {
+      // Simular progresso inicial
+      const progressInterval = setInterval(() => {
         setFiles(current => 
-          current.map(f => f.id === uploadFile.id ? { ...uploadFile } : f)
+          current.map(f => {
+            if (f.id === uploadFile.id && f.progress < 90) {
+              return { ...f, progress: f.progress + 10 };
+            }
+            return f;
+          })
         );
       }, 200);
 
-      // Simula possível erro (5% chance)
-      if (Math.random() < 0.05) {
-        setTimeout(() => {
-          clearInterval(interval);
-          uploadFile.status = 'error';
-          reject(new Error('Upload failed'));
-        }, 1000);
+      // Preparar FormData
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Determinar tipo de upload e chamar Server Action apropriada
+      let result;
+      const userId = '1'; // Mock user ID - em produção viria do contexto de auth
+      
+      if (path.startsWith('avatars/')) {
+        result = await uploadAvatar(formData, userId);
+      } else if (path.includes('products/')) {
+        const productId = path.split('products/')[1]?.split('/')[0] || 'unknown';
+        result = await uploadProductAttachment(formData, currentTeamId || '1', userId, productId);
+      } else {
+        result = await uploadDocument(formData, currentTeamId || '1', userId, path);
       }
-    });
+
+      clearInterval(progressInterval);
+
+      if (result.success && result.url) {
+        uploadFile.progress = 100;
+        uploadFile.status = 'success';
+        uploadFile.url = result.url;
+        
+        // Log para desenvolvimento
+        console.log('Real upload completed:', {
+          name: file.name,
+          url: result.url,
+          type: file.type,
+          size: file.size,
+          teamId: currentTeamId,
+          path: path,
+          fileId: result.fileId
+        });
+        
+        return uploadFile;
+      } else {
+        throw new Error(result.error || 'Upload failed');
+      }
+
+    } catch (error) {
+      uploadFile.status = 'error';
+      uploadFile.progress = 0;
+      throw error;
+    }
   }, [path, currentTeamId]);
+
+  /**
+   * Calcula o uso atual de storage da equipe baseado nos dados mockados
+   */
+  const calculateCurrentUsage = useCallback((): number => {
+    if (!currentTeamId) return 0;
+
+    // Simular cálculo de uso atual baseado nos documentos da equipe
+    const teamDocuments = mockDb.documents.filter(doc => doc.team_id === currentTeamId);
+    const totalUsage = teamDocuments.reduce((sum, doc) => {
+      // Simular tamanho dos arquivos (em bytes)
+      // Em produção, isso viria do Supabase Storage
+      const mockFileSize = Math.floor(Math.random() * 5 * 1024 * 1024); // 0-5MB por arquivo
+      return sum + mockFileSize;
+    }, 0);
+
+    return totalUsage;
+  }, [currentTeamId]);
 
   /**
    * Verifica se o upload pode ser realizado (storage limits)
@@ -172,20 +205,24 @@ export function Uploader({
     if (!checkStorageLimit) return true;
 
     const storageLimit = getLimit('storage-limit-mb') * 1024 * 1024; // Convert MB to bytes
-    const currentUsage = 0; // Mock: simulate current storage usage
+    const currentUsage = calculateCurrentUsage();
     const newFilesSize = newFiles.reduce((sum, file) => sum + file.size, 0);
 
     if (currentUsage + newFilesSize > storageLimit) {
+      const currentUsageMB = Math.round(currentUsage / 1024 / 1024);
+      const limitMB = getLimit('storage-limit-mb');
+      const newFilesMB = Math.round(newFilesSize / 1024 / 1024);
+      
       toast({
         title: "Limite de armazenamento excedido",
-        description: "Você excedeu o limite de armazenamento do seu plano.",
+        description: `Uso atual: ${currentUsageMB}MB. Tentando adicionar: ${newFilesMB}MB. Limite: ${limitMB}MB.`,
         variant: "destructive",
       });
       return false;
     }
 
     return true;
-  }, [checkStorageLimit, getLimit, toast]);
+  }, [checkStorageLimit, getLimit, toast, calculateCurrentUsage]);
 
   /**
    * Processa os arquivos selecionados
@@ -233,7 +270,7 @@ export function Uploader({
     try {
       // Faz upload de cada arquivo
       const uploadPromises = selectedFiles.map((file, index) => 
-        simulateUpload(file)
+        performUpload(file)
       );
 
       const uploadedFiles = await Promise.all(uploadPromises);
@@ -254,7 +291,7 @@ export function Uploader({
         variant: "destructive",
       });
     }
-  }, [files.length, maxFiles, maxFileSize, canUpload, simulateUpload, onUploadComplete, onUploadError, toast]);
+  }, [files.length, maxFiles, maxFileSize, canUpload, performUpload, onUploadComplete, onUploadError, toast]);
 
   /**
    * Manipula drag and drop

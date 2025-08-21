@@ -4,6 +4,7 @@
  */
 
 import { mockDb, MockUser } from './db';
+import { dashboardHandlers } from './dashboard-handlers';
 
 /**
  * Response types for mock API calls
@@ -146,4 +147,17 @@ export const mockAuth = {
  */
 export const isMockEnabled = (): boolean => {
   return import.meta.env.VITE_USE_MOCKS === 'true' || import.meta.env.DEV;
+};
+
+/**
+ * Dashboard mock handlers
+ */
+export const mockDashboard = dashboardHandlers;
+
+/**
+ * Unified mock API handler
+ */
+export const mockApi = {
+  auth: mockAuth,
+  dashboard: mockDashboard
 };

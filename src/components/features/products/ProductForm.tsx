@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useTeams } from '@/lib/contexts/TeamContext';
 import { Uploader, UploaderFile } from '@/components/shared/Uploader';
 import { mockDb, MockProduct } from '@/mocks/db';
+import { NotificationHelpers } from '@/lib/services/notification-service';
 
 /**
  * Schema de validação para o formulário de produtos
@@ -132,6 +133,19 @@ export default function ProductForm({ product, onSave, onCancel }: ProductFormPr
           status: data.status,
           teamId: currentTeamId,
         });
+
+        // Criar notificação para membros da equipe
+        try {
+          await NotificationHelpers.productCreated(
+            result.id,
+            result.name,
+            '1', // Mock user ID - em produção viria do contexto de autenticação
+            currentTeamId
+          );
+        } catch (error) {
+          console.error('Erro ao criar notificação:', error);
+          // Não bloqueia o fluxo principal se a notificação falhar
+        }
 
         toast({
           title: 'Sucesso',

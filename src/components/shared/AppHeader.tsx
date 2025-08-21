@@ -27,6 +27,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useEntitlements } from '@/lib/hooks/useEntitlements';
 import { usePermissions } from '@/lib/hooks/usePermissions';
 import TeamSwitcher from '@/components/features/teams/TeamSwitcher';
+import NotificationBell from '@/components/features/notifications/NotificationBell';
 
 interface AppHeaderProps {
   /** Título da página atual */
@@ -146,7 +147,7 @@ export default function AppHeader({
           {/* Quick navigation - Admin only */}
           {can('manage', 'all') && (
             <div className="hidden md:flex items-center space-x-1 mr-4">
-              <Button variant="ghost" size="sm" asChild>
+              <Button key="nav-dashboard" variant="ghost" size="sm" asChild>
                 <Link to="/dashboard">
                   <Home className="w-4 h-4 mr-2" />
                   Dashboard
@@ -166,6 +167,9 @@ export default function AppHeader({
               </Button>
             </div>
           )}
+
+          {/* Notification Bell */}
+          <NotificationBell userId="1" />
 
           {/* User Menu */}
           {showUserMenu && (
@@ -211,7 +215,7 @@ export default function AppHeader({
                 {can('manage', 'all') && (
                   <>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem key="admin-dashboard" asChild>
                       <Link to="/admin/dashboard" className="flex items-center">
                         <Shield className="mr-2 h-4 w-4" />
                         <span>Administração</span>
@@ -238,7 +242,7 @@ export default function AppHeader({
             {breadcrumbs ? (
               <nav className="flex items-center space-x-2 text-sm">
                 {breadcrumbs.map((crumb, index) => (
-                  <div key={crumb.label} className="flex items-center space-x-2">
+                  <div key={`breadcrumb-${index}-${crumb.label}`} className="flex items-center space-x-2">
                     {crumb.href ? (
                       <Link 
                         to={crumb.href}
