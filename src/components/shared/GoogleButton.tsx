@@ -35,7 +35,7 @@ export const GoogleButton = ({
     <Button
       type="button"
       variant="outline"
-      className="w-full bg-white text-foreground border-border hover:bg-muted/50"
+      className="w-full bg-white text-background border-border hover:bg-muted/50 hover:text-foreground"
       onClick={onClick}
       disabled={disabled || isLoading}
     >

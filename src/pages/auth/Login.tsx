@@ -17,16 +17,6 @@ import { LoginForm } from '@/components/features/auth/LoginForm';
  * Login page component
  */
 const Login = () => {
-  // Implementa redirecionamento pós-login baseado na existência de equipes
-  const { isRedirecting } = useAuthRedirect();
-
-  if (isRedirecting) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   return (
     <>
