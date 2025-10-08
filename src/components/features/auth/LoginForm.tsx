@@ -116,8 +116,6 @@ export const LoginForm = () => {
         });
       }
 		} catch (error) {
-			console.log("LOGIN FORM: ERROR:: ", error);
-
 			if (error != "TypeError: Cannot read properties of undefined (reading 'success')") {
 				toast({
 					variant: 'destructive',

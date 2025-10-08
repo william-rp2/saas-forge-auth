@@ -103,10 +103,6 @@ export function ProfileForm() {
 			const { bio, company, website, avatar_url: avatarUrl } = profile || { bio: "", company: "", website: "", avatar_url: "" };
 			const address = await AddressRepository.findByUserId(user.id);
 
-			console.log("user: ", user);
-			console.log("profile: ", profile);
-			console.log("address: ", address);
-
 			userProfile.current = {
 				initials,
 				name,
@@ -114,7 +110,7 @@ export function ProfileForm() {
 				bio,
 				company,
 				website,
-				avatarUrl: user.avatar_url,
+				avatarUrl: user.avatar_url !== null ? user.avatar_url : profile.avatar_url,
 				birthdate: user.birth_date,
 				cpf: addCpfMask(user.cpf),
 				gender: user.gender,
@@ -136,7 +132,7 @@ export function ProfileForm() {
 			form.setValue("addressType", address ? address.address_type : "RESIDENTIAL")
 			form.setValue("addressValue", address ? address.address_value : "");
 
-			setAvatarUrl(user.avatar_url);
+			setAvatarUrl(user.avatar_url !== null ? user.avatar_url : profile.avatar_url);
 		}
 		fetchUserProfile();
 		

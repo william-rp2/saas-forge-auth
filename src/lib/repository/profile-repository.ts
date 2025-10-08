@@ -58,7 +58,6 @@ export const ProfilesRepository = {
 		return profile as ProfilesEntity;
 	},
 	save: async (profile: ProfilesEntity): Promise<ProfilesEntity> => {
-		console.log("profile to save: ", profile);
 		const { data: profileCreated, error } = await supabaseClient.from(DATABASE_NAME).insert(profile).select().single();
 
 		if (error) {
@@ -79,8 +78,6 @@ export const ProfilesRepository = {
 	},
 	updateOrSave: async (userId: string, profile: ProfilesEntity): Promise<ProfilesEntity> => {
 		const { data, error } = await supabaseClient.from(DATABASE_NAME).select().eq("user_id", userId);
-
-		console.log("Data: ", data);
 
 		if (error) {
 			console.error("[UDPATEORSAVE] An error has occurred while find a user to update a profile. ERROR: ", );

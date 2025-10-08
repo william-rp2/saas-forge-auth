@@ -63,11 +63,7 @@ export const authApi = {
 		const user = await UsersRepository.findByEmail(email);
 
 		if (!user) throw new Error("User not found");
-
-		console.log("User founded");
 		const valueMatch: boolean = await compare(password, user.password);
-		console.log("password: ", password);
-		console.log("user.password: ", user.password);
 		if (!valueMatch) throw new Error("User or password is wrong");
 
 		const { data, error } = await supabaseClient.auth.signInWithPassword({

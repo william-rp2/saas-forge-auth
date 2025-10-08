@@ -194,7 +194,6 @@ export const PasswordForm = ({ onPasswordChange }: PasswordFormProps) => {
    */
   const validateActualPassword = async () => {
     const password: string = form.getValues("currentPassword");
-    console.log("actual password typed: ", password);
     const match: boolean = await bcrypt.compare(password, user.current.actualPass);
 
     if (!match) toast({ description: "A senha está incorreta", variant: "destructive" });
