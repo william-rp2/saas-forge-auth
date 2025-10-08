@@ -28,6 +28,7 @@ import TeamLayout from "./pages/settings/team/TeamLayout";
 import Members from "./pages/settings/team/Members";
 import Invitations from "./pages/settings/team/Invitations";
 import NotificationsPage from "./pages/notifications/NotificationsPage";
+import ProtectedRoute from "./components/features/security/ProtectedRoute";
 
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { TeamProvider } from '@/lib/contexts/TeamContext';
@@ -59,7 +60,7 @@ const App = () => (
                 <Route path="/teams/create" element={<CreateTeamPage />} />
                 
                 {/* Application Routes */}
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 
                 {/* Admin Routes */}

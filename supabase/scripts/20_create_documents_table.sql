@@ -22,43 +22,6 @@ CREATE INDEX idx_documents_uploaded_by ON public.documents(uploaded_by);
 CREATE INDEX idx_documents_file_type ON public.documents(file_type);
 CREATE INDEX idx_documents_created_at ON public.documents(created_at DESC);
 
--- Habilitar RLS
-ALTER TABLE public.documents ENABLE ROW LEVEL SECURITY;
-
--- Política: Usuários podem ver documentos de suas equipes
-CREATE POLICY "Users can view team documents" 
-ON public.documents FOR SELECT 
-USING (
-  team_id IN (
-    SELECT tm.team_id 
-    FROM public.team_members tm 
-    WHERE tm.user_id = auth.uid()
-  )
-);
-
--- Política: Usuários podem inserir documentos em suas equipes
-CREATE POLICY "Users can insert team documents" 
-ON public.documents FOR INSERT 
-WITH CHECK (
-  team_id IN (
-    SELECT tm.team_id 
-    FROM public.team_members tm 
-    WHERE tm.user_id = auth.uid()
-  )
-  AND uploaded_by = auth.uid()
-);
-
--- Política: Usuários podem atualizar documentos que fizeram upload
-CREATE POLICY "Users can update own documents" 
-ON public.documents FOR UPDATE 
-USING (uploaded_by = auth.uid())
-WITH CHECK (uploaded_by = auth.uid());
-
--- Política: Usuários podem deletar documentos que fizeram upload
-CREATE POLICY "Users can delete own documents" 
-ON public.documents FOR DELETE 
-USING (uploaded_by = auth.uid());
-
 -- Trigger para atualizar updated_at
 CREATE OR REPLACE FUNCTION update_documents_updated_at()
 RETURNS TRIGGER AS $$

@@ -11,7 +11,7 @@ CREATE TABLE public.profiles (
     phone VARCHAR(20),
     timezone VARCHAR(50) DEFAULT 'America/Sao_Paulo',
     language VARCHAR(10) DEFAULT 'pt-BR',
-    notification_preferences JSONB DEFAULT '{"email": true, "sms": false, "push": true}',
+    notification_preferences JSONB DEFAULT '{"email": true, "sms": false, "push": true, "theme": "light"}',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -25,28 +25,3 @@ CREATE TRIGGER update_profiles_updated_at
     BEFORE UPDATE ON public.profiles 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
-
--- Enable Row Level Security
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-
--- RLS Policies
-CREATE POLICY "Users can view own profile" 
-    ON public.profiles FOR SELECT 
-    USING (EXISTS (
-        SELECT 1 FROM public.users 
-        WHERE users.id = profiles.user_id 
-        AND users.auth_user_id = auth.uid()
-    ));
-
-CREATE POLICY "Users can update own profile" 
-    ON public.profiles FOR UPDATE 
-    USING (EXISTS (
-        SELECT 1 FROM public.users 
-        WHERE users.id = profiles.user_id 
-        AND users.auth_user_id = auth.uid()
-    ));
-
--- Service role policy
-CREATE POLICY "Service role can manage all profiles" 
-    ON public.profiles FOR ALL 
-    USING (auth.role() = 'service_role');

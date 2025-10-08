@@ -17,49 +17,6 @@ CREATE TABLE public.product_attachments (
 CREATE INDEX idx_product_attachments_product_id ON public.product_attachments(product_id);
 CREATE INDEX idx_product_attachments_document_id ON public.product_attachments(document_id);
 
--- Habilitar RLS
-ALTER TABLE public.product_attachments ENABLE ROW LEVEL SECURITY;
-
--- Política: Usuários podem ver anexos de produtos de suas equipes
-CREATE POLICY "Users can view team product attachments" 
-ON public.product_attachments FOR SELECT 
-USING (
-  product_id IN (
-    SELECT p.id 
-    FROM public.products p 
-    INNER JOIN public.team_members tm ON p.team_id = tm.team_id 
-    WHERE tm.user_id = auth.uid()
-  )
-);
-
--- Política: Usuários podem inserir anexos em produtos de suas equipes
-CREATE POLICY "Users can insert team product attachments" 
-ON public.product_attachments FOR INSERT 
-WITH CHECK (
-  product_id IN (
-    SELECT p.id 
-    FROM public.products p 
-    INNER JOIN public.team_members tm ON p.team_id = tm.team_id 
-    WHERE tm.user_id = auth.uid()
-  )
-  AND document_id IN (
-    SELECT d.id 
-    FROM public.documents d 
-    WHERE d.uploaded_by = auth.uid()
-  )
-);
-
--- Política: Usuários podem deletar anexos que criaram
-CREATE POLICY "Users can delete own product attachments" 
-ON public.product_attachments FOR DELETE 
-USING (
-  document_id IN (
-    SELECT d.id 
-    FROM public.documents d 
-    WHERE d.uploaded_by = auth.uid()
-  )
-);
-
 -- View para facilitar consultas de produtos com anexos
 CREATE OR REPLACE VIEW public.products_with_attachments AS
 SELECT 

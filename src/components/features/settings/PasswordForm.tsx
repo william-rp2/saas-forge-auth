@@ -5,7 +5,7 @@
  * Includes current password verification and security requirements.
  */
 
-import { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,6 +23,9 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
+import { UsersRepository } from '@/lib/repository/users-respository';
+import bcrypt from 'bcryptjs';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Password validation schema with security requirements
@@ -111,6 +114,7 @@ export const PasswordForm = ({ onPasswordChange }: PasswordFormProps) => {
     new: false,
     confirm: false,
   });
+  const [isFormDisabled, setIsFormDisabled] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<PasswordFormData>({
@@ -124,6 +128,24 @@ export const PasswordForm = ({ onPasswordChange }: PasswordFormProps) => {
 
   const { watch, reset, setError } = form;
   const newPassword = watch('newPassword');
+
+  const { email } = JSON.parse(localStorage.getItem("logged_data"));
+  const user = React.useRef(null);
+
+  useEffect(() => {
+    async function fetchUser() {
+      const { data } = await supabase.auth.getUser();
+
+      const isGoogleProvider: boolean = data.user.app_metadata.provider === "google";
+      setIsFormDisabled(isGoogleProvider);
+
+      //- O usuário se cadastrou na plataforma com e-mail e senha
+      const userFounded = await UsersRepository.findByEmail(email);
+      user.current = { actualPass: userFounded.password }
+    }
+
+    fetchUser();
+  }, [email]);
 
   /**
    * Toggle password visibility for specific field
@@ -140,33 +162,22 @@ export const PasswordForm = ({ onPasswordChange }: PasswordFormProps) => {
    */
   const handleSubmit = async (data: PasswordFormData) => {
     setIsLoading(true);
-    
+
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock password validation (our test password is '123456')
-      if (data.currentPassword !== '123456') {
-        setError('currentPassword', {
-          type: 'manual',
-          message: 'Senha atual incorreta',
-        });
-        return;
+      const password: string = form.getValues("newPassword");
+      const passwordHash: string = await bcrypt.hash(password, 10);
+      const {data, error} = await supabase.auth.updateUser({ password: passwordHash });
+      const { id } = JSON.parse(localStorage.getItem("logged_data"));
+      await UsersRepository.update(id, { password: passwordHash });
+
+      if (error) {
+        console.error("Erro ao atualizar a senha.", error);
+        throw new Error("Erro ao atualizar a senha");
+      } else {
+        reset();
+        toast({ title: "Senha alterada!", description: "Sua senha foi alterada com sucesso." });
+        onPasswordChange?.();
       }
-
-      // In real app, this would be an API call to change password
-      console.log('Changing password...');
-      
-      // Reset form on success
-      reset();
-      
-      toast({
-        title: "Senha alterada!",
-        description: "Sua senha foi alterada com sucesso.",
-      });
-
-      onPasswordChange?.();
-      
     } catch (error) {
       toast({
         title: "Erro ao alterar senha",
@@ -178,6 +189,39 @@ export const PasswordForm = ({ onPasswordChange }: PasswordFormProps) => {
     }
   };
 
+  /**
+   * Valida a senha atual do usuário
+   */
+  const validateActualPassword = async () => {
+    const password: string = form.getValues("currentPassword");
+    const match: boolean = await bcrypt.compare(password, user.current.actualPass);
+
+    if (!match) toast({ description: "A senha está incorreta", variant: "destructive" });
+  }
+
+  /**
+   * Valida a nova senha do usuário
+   * Ela não pode ser igual a senha antiga
+   * Deve ter pelo menos 8 caracteres
+   * Deve ter pelo menos 1 número
+   * Deve ter pelo menos 1 letra maíuscula
+   * Deve ter pelo menos 1 letra minúscula
+   * Deve ter pelo menos 1 caractere especial (@#$%...)
+   */
+  const validatePassword = async () => {
+    const newPass: string = form.getValues("newPassword");
+    const match: boolean = await bcrypt.compare(newPass, user.current.actualPass);
+
+    if (match) toast({ description: "A senha atual não pode ser igual à senha antiga", variant: "destructive"});
+  }
+
+  const validateConfirmationPassword = async () => {
+    const newPassword: string = form.getValues("newPassword");
+    const confirmationPassword: string = form.getValues("confirmPassword");
+
+    if (confirmationPassword !== newPassword) toast({ description: "As senhas não são iguais, por favor verifique e tente novamente", variant: "destructive"});
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -185,6 +229,8 @@ export const PasswordForm = ({ onPasswordChange }: PasswordFormProps) => {
         <p className="text-muted-foreground">
           Altere sua senha para manter sua conta segura.
         </p>
+
+        { isFormDisabled ? <p><b>Usuários cadastrados diretamente com a Conta Google, por segurança não podem realizar alteração de senha.</b></p> : "" }
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -211,6 +257,8 @@ export const PasswordForm = ({ onPasswordChange }: PasswordFormProps) => {
                             type={showPasswords.current ? "text" : "password"}
                             placeholder="Digite sua senha atual"
                             {...field}
+                            onBlur={() => validateActualPassword()}
+                            disabled={ isFormDisabled }
                           />
                           <Button
                             type="button"
@@ -244,6 +292,8 @@ export const PasswordForm = ({ onPasswordChange }: PasswordFormProps) => {
                             type={showPasswords.new ? "text" : "password"}
                             placeholder="Digite sua nova senha"
                             {...field}
+                            onKeyUp={() => validatePassword()}
+                            disabled={ isFormDisabled }
                           />
                           <Button
                             type="button"
@@ -277,6 +327,8 @@ export const PasswordForm = ({ onPasswordChange }: PasswordFormProps) => {
                             type={showPasswords.confirm ? "text" : "password"}
                             placeholder="Confirme sua nova senha"
                             {...field}
+                            disabled={ isFormDisabled }
+                            onBlur={() => validateConfirmationPassword()}
                           />
                           <Button
                             type="button"
@@ -301,7 +353,7 @@ export const PasswordForm = ({ onPasswordChange }: PasswordFormProps) => {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={isLoading}
+                  disabled={isLoading || isFormDisabled }
                 >
                   {isLoading ? "Alterando..." : "Alterar Senha"}
                 </Button>

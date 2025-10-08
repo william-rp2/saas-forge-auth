@@ -20,17 +20,3 @@ CREATE TRIGGER update_user_preferences_updated_at
     BEFORE UPDATE ON public.user_preferences 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
-
--- Enable Row Level Security
-ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
-
--- RLS Policy - Users can only access their own preferences
-CREATE POLICY "Users can manage their own preferences" 
-    ON public.user_preferences FOR ALL 
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.users u
-            WHERE u.id = user_preferences.user_id
-            AND u.auth_user_id = auth.uid()
-        )
-    );

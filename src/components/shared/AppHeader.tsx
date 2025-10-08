@@ -28,6 +28,7 @@ import { useEntitlements } from '@/lib/hooks/useEntitlements';
 import { usePermissions } from '@/lib/hooks/usePermissions';
 import TeamSwitcher from '@/components/features/teams/TeamSwitcher';
 import NotificationBell from '@/components/features/notifications/NotificationBell';
+import { authApi } from '@/lib/auth';
 
 interface AppHeaderProps {
   /** Título da página atual */
@@ -84,12 +85,47 @@ export default function AppHeader({
     navigate(backUrl);
   };
 
-  // Dados mockados do usuário
-  const currentUser = {
-    name: 'Usuário Teste',
-    email: 'teste@email.com',
-    initials: 'UT'
-  };
+	const logout = async () => {
+		authApi.logout();
+		navigate("/auth/login");
+	};
+
+	const getUserInfo = (): {
+    id: string;
+		name: string;
+		email: string;
+		initials: string;
+	} => {
+
+		let loggedData = JSON.parse(localStorage.getItem("logged_data"));
+
+		if (!loggedData) {
+			for (let i = 0; i < localStorage.length; i++) {
+				const actualKey = localStorage.key(i);
+				if (actualKey.includes("auth-token")) {
+
+					const authToken = JSON.parse(localStorage.getItem(actualKey));
+					const name: string = authToken.user.user_metadata.full_name;
+					const nameSplitted: string[] = name.split(" ");
+					const id: string = authToken.user.id;
+
+          loggedData = {
+            id,
+						name,
+						email: authToken.user.user_metadata.email,
+						initials: `${nameSplitted[0][0]}${nameSplitted[nameSplitted.length - 1][0]}`
+					};
+
+					localStorage.setItem("logged_data", JSON.stringify(loggedData));
+					break;
+				}
+			}
+		}
+
+		return loggedData;
+	};
+
+	const currentUser = getUserInfo();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -227,7 +263,7 @@ export default function AppHeader({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sair</span>
+                  <span onClick={logout}>Sair</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

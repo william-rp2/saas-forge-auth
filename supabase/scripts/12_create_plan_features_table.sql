@@ -25,21 +25,3 @@ INSERT INTO public.plan_features (plan_id, feature_id) VALUES
 ('3', '3'), -- priority-support
 ('3', '4'), -- custom-branding
 ('3', '5'); -- unlimited-exports
-
--- Enable RLS
-ALTER TABLE public.plan_features ENABLE ROW LEVEL SECURITY;
-
--- Create policy for plan_features (read-only for all authenticated users)
-CREATE POLICY "Plan features are viewable by authenticated users" ON public.plan_features
-    FOR SELECT USING (auth.role() = 'authenticated');
-
--- Create policy for plan_features management (admin only)
-CREATE POLICY "Plan features are manageable by admins" ON public.plan_features
-    FOR ALL USING (
-        EXISTS (
-            SELECT 1 FROM public.users u 
-            JOIN public.roles r ON u.role_id = r.id 
-            WHERE u.id = auth.uid() 
-            AND r.name = 'Administrador'
-        )
-    );
