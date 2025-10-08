@@ -12,6 +12,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { mockDb } from '@/mocks/db';
+import { ProfilesEntity, ProfilesRepository } from '../repository/profile-repository';
 
 export interface UploadResult {
   success: boolean;
@@ -237,6 +238,12 @@ export async function uploadFile(
         documentId = docData?.id;
       }
     }
+
+    await ProfilesRepository.updateOrSave(options.userId, {
+			user_id: options.userId,
+			avatar_url: urlData.publicUrl,
+			updated_at: new Date(),
+		} as ProfilesEntity);
 
     return {
       success: true,

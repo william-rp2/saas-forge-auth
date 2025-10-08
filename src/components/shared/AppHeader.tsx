@@ -91,6 +91,7 @@ export default function AppHeader({
 	};
 
 	const getUserInfo = (): {
+    id: string;
 		name: string;
 		email: string;
 		initials: string;
@@ -106,8 +107,10 @@ export default function AppHeader({
 					const authToken = JSON.parse(localStorage.getItem(actualKey));
 					const name: string = authToken.user.user_metadata.full_name;
 					const nameSplitted: string[] = name.split(" ");
+					const id: string = authToken.user.id;
 
-					loggedData = {
+          loggedData = {
+            id,
 						name,
 						email: authToken.user.user_metadata.email,
 						initials: `${nameSplitted[0][0]}${nameSplitted[nameSplitted.length - 1][0]}`

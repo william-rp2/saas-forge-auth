@@ -6,7 +6,7 @@
 import { mockAuth, isMockEnabled } from "@/mocks";
 import { supabase as supabaseClient } from "@/integrations/supabase/client";
 import { UsersRepository } from "./repository/users-respository";
-import { compare, hash } from "bcryptjs";
+import { compare, hash, truncates } from "bcryptjs";
 
 /**
  * User authentication state
@@ -60,18 +60,15 @@ export const authApi = {
 	 */
 	login: async (credentials: LoginCredentials) => {
 		const { email, password } = credentials;
-		const [user] = await UsersRepository.findByEmail(email);
+		const user = await UsersRepository.findByEmail(email);
 
-		if (!user) {
-			console.error("Usuário não encontrado com o e-mail informado");
-			throw new Error("User not found");
-		}
+		if (!user) throw new Error("User not found");
 
+		console.log("User founded");
 		const valueMatch: boolean = await compare(password, user.password);
-		if (!valueMatch) {
-			console.error("Usuário ou senha não conferem");
-			throw new Error("User or password is wrong");
-		}
+		console.log("password: ", password);
+		console.log("user.password: ", user.password);
+		if (!valueMatch) throw new Error("User or password is wrong");
 
 		const { data, error } = await supabaseClient.auth.signInWithPassword({
 			email,
@@ -83,9 +80,11 @@ export const authApi = {
 		}
 
 		const nameSplitted: string[] = user.full_name.split(" ");
+
 		localStorage.setItem(
 			"logged_data",
 			JSON.stringify({
+				id: user.id,
 				name: user.full_name,
 				email: user.email,
 				initials: `${nameSplitted[0][0]}${nameSplitted[nameSplitted.length - 1][0]}`,
@@ -110,21 +109,12 @@ export const authApi = {
 	 * Register new user
 	 */
 	register: async (data: RegisterData) => {
-		// if (isMockEnabled()) {
-		//   return mockAuth.register({
-		//     name: data.fullName,
-		//     email: data.email,
-		//     password: data.password,
-		//     selectedPlan: data.selectedPlan,
-		//   });
-		// }
-
 		try {
 			//- Verifica se existe algum usuário com o e-mail cadastrado
 			const { email, fullName, selectedPlan, password } = data;
 			const userAlreadyExists = await UsersRepository.findByEmail(email);
 
-			if (userAlreadyExists.length > 0) {
+			if (userAlreadyExists) {
 				//- Existe um usuário cadastrado com o e-mail informado
 				throw new Error("Já existe um usuário cadastrado com este e-mail");
 			}
@@ -175,10 +165,11 @@ export const authApi = {
 		const email: string = user_metadata.email;
 		const avatar = user_metadata.avatar_url;
 
-		await UsersRepository.save({ full_name: name, email, avatar_url: avatar, selected_plan: "basic" } as User);
+		const userSaved = await UsersRepository.save({ full_name: name, email, avatar_url: avatar, selected_plan: "basic" } as User);
 
 		const nameSplitted: string[] = name.split(" ");
 		localStorage.setItem("logged_data", JSON.stringify({
+			id,
 			name,
 			email,
 			initials: `${nameSplitted[0][0]}${nameSplitted[nameSplitted.length - 1][0]}`
@@ -209,6 +200,7 @@ export const authApi = {
 
 		const nameSplitted: string[] = name.split(" ");
 		localStorage.setItem("logged_data", JSON.stringify({
+			id,
 			name,
 			email,
 			initials: `${nameSplitted[0][0]}${nameSplitted[nameSplitted.length - 1][0]}`

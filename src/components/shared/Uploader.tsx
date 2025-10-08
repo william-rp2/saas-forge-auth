@@ -139,7 +139,8 @@ export function Uploader({
 
       // Determinar tipo de upload e chamar Server Action apropriada
       let result;
-      const userId = '1'; // Mock user ID - em produção viria do contexto de auth
+      const { id } = JSON.parse(localStorage.getItem("logged_data"));
+      const userId = id; // Mock user ID - em produção viria do contexto de auth
       
       if (path.startsWith('avatars/')) {
         result = await uploadAvatar(formData, userId);
