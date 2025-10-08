@@ -32,20 +32,3 @@ CREATE TRIGGER update_users_updated_at
     BEFORE UPDATE ON public.users 
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
-
--- Enable Row Level Security
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-
--- RLS Policies
-CREATE POLICY "Users can view own profile" 
-    ON public.users FOR SELECT 
-    USING (auth.uid() = auth_user_id);
-
-CREATE POLICY "Users can update own profile" 
-    ON public.users FOR UPDATE 
-    USING (auth.uid() = auth_user_id);
-
--- Admin policy (for service operations)
-CREATE POLICY "Service role can manage all users" 
-    ON public.users FOR ALL 
-    USING (auth.role() = 'service_role');

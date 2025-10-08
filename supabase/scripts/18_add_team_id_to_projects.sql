@@ -18,18 +18,6 @@ CREATE INDEX idx_projects_team_id ON public.projects(team_id);
 CREATE INDEX idx_projects_team_status ON public.projects(team_id, status);
 CREATE INDEX idx_projects_created_by ON public.projects(created_by);
 
--- Add RLS policy for tenant isolation
-ALTER TABLE public.projects ENABLE ROW LEVEL SECURITY;
-
--- CRITICAL: This policy ensures data isolation between teams
-CREATE POLICY "Users can only access projects from their teams" ON public.projects
-  FOR ALL USING (
-    team_id IN (
-      SELECT team_id FROM public.team_members 
-      WHERE user_id = auth.uid()
-    )
-  );
-
 -- Example of how to add team_id to existing tables (if they existed)
 -- ALTER TABLE existing_table ADD COLUMN team_id UUID REFERENCES public.teams(id);
 -- UPDATE existing_table SET team_id = (SELECT default_team_for_migration);

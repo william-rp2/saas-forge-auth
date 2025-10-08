@@ -43,30 +43,6 @@ CREATE TRIGGER set_notifications_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION public.set_updated_at();
 
--- Enable RLS (Row Level Security)
-ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
-
--- Create RLS policies
--- Users can only see notifications where they are the recipient
-CREATE POLICY "Users can view their own notifications" ON public.notifications
-  FOR SELECT USING (
-    recipient_user_id = auth.uid()
-  );
-
--- Users can update their own notifications (mark as read)
-CREATE POLICY "Users can update their own notifications" ON public.notifications
-  FOR UPDATE USING (
-    recipient_user_id = auth.uid()
-  );
-
--- System can insert notifications (handled by service functions)
-CREATE POLICY "System can insert notifications" ON public.notifications
-  FOR INSERT WITH CHECK (true);
-
--- Grant permissions
-GRANT SELECT, UPDATE ON public.notifications TO authenticated;
-GRANT INSERT ON public.notifications TO service_role;
-
 -- Add comments for documentation
 COMMENT ON TABLE public.notifications IS 'Stores all user notifications for the application';
 COMMENT ON COLUMN public.notifications.recipient_user_id IS 'User who will receive the notification';

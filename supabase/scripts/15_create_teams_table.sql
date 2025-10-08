@@ -9,15 +9,3 @@ CREATE TABLE public.teams (
 
 -- Create index for better performance
 CREATE INDEX idx_teams_owner_id ON public.teams(owner_id);
-
--- Add RLS policy
-ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
-
--- Policy: Users can only see teams they are members of
-CREATE POLICY "Users can view teams they are members of" ON public.teams
-  FOR SELECT USING (
-    id IN (
-      SELECT team_id FROM public.team_members 
-      WHERE user_id = auth.uid()
-    )
-  );
