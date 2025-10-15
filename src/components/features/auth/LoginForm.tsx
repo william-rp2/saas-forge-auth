@@ -31,6 +31,7 @@ import { GoogleButton } from '@/components/shared/GoogleButton';
 import { FormDivider } from '@/components/shared/FormDivider';
 import { loginSchema, type LoginFormData } from '@/lib/validations';
 import { authApi } from '@/lib/auth';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Login form component with validation and authentication
@@ -63,11 +64,7 @@ export const LoginForm = () => {
           title: 'Login realizado com sucesso!',
           description: 'Você será redirecionado para o dashboard.',
         });
-        
-        // TODO: Store user data and token
-        // TODO: Update auth context
-        
-        // Navigate to dashboard (placeholder)
+
         navigate('/dashboard');
       } else {
         toast({
@@ -94,17 +91,22 @@ export const LoginForm = () => {
     try {
       setIsGoogleLoading(true);
       
-      const response = await authApi.googleLogin();
-      
+			const response = await authApi.googleLogin();
+			if (!response) {
+				let responseLocalStorage: boolean = await authApi.setUserDataInLocalStorage();
+				while (responseLocalStorage === false) {
+					responseLocalStorage = await authApi.setUserDataInLocalStorage();
+				}
+
+				response.success = true;
+			}
+
       if (response.success) {
         toast({
           title: 'Login realizado com sucesso!',
           description: 'Você será redirecionado para o dashboard.',
         });
-        
-        // TODO: Store user data and token
-        // TODO: Update auth context
-        
+
         navigate('/dashboard');
       } else {
         toast({
@@ -113,12 +115,14 @@ export const LoginForm = () => {
           description: response.message,
         });
       }
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro no login',
-        description: 'Ocorreu um erro inesperado. Tente novamente.',
-      });
+		} catch (error) {
+			if (error != "TypeError: Cannot read properties of undefined (reading 'success')") {
+				toast({
+					variant: 'destructive',
+					title: 'Erro no login',
+					description: 'Ocorreu um erro inesperado. Tente novamente.',
+				});
+			}
     } finally {
       setIsGoogleLoading(false);
     }

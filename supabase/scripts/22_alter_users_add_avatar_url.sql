@@ -76,10 +76,3 @@ CREATE TRIGGER trigger_cleanup_user_avatar
   BEFORE DELETE ON public.users
   FOR EACH ROW
   EXECUTE FUNCTION cleanup_user_avatar();
-
--- Política RLS para avatar_url (usuários podem atualizar seu próprio avatar)
--- Assumindo que já existe RLS na tabela users
-CREATE POLICY "Users can update own avatar" 
-ON public.users FOR UPDATE 
-USING (id = auth.uid())
-WITH CHECK (id = auth.uid());

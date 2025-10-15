@@ -26,7 +26,7 @@ export const AuthLayout = ({ children, title, subtitle }: AuthLayoutProps) => {
   return (
     <div className="min-h-screen flex">
       {/* Left side - Brand visual (hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary to-primary-light items-center justify-center p-8">
+      <div className="hidden lg:flex lg:w-1/3 bg-gradient-to-br from-primary to-primary-light items-center justify-center p-8">
         <div className="text-center text-primary-foreground">
           <div className="mb-8">
             <div className="w-24 h-24 mx-auto bg-white/20 rounded-full flex items-center justify-center mb-6">

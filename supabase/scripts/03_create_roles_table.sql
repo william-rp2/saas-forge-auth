@@ -20,31 +20,8 @@ CREATE TRIGGER update_roles_updated_at
     FOR EACH ROW 
     EXECUTE FUNCTION update_updated_at_column();
 
--- Enable Row Level Security
-ALTER TABLE public.roles ENABLE ROW LEVEL SECURITY;
-
--- RLS Policies
-CREATE POLICY "Admins can manage roles" 
-    ON public.roles FOR ALL 
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.users u
-            JOIN public.roles r ON u.role_id = r.id
-            WHERE u.auth_user_id = auth.uid()
-            AND EXISTS (
-                SELECT 1 FROM public.role_permissions rp
-                JOIN public.permissions p ON rp.permission_id = p.id
-                WHERE rp.role_id = r.id
-                AND (
-                    (p.action = 'manage' AND p.subject = 'all') OR
-                    (p.action IN ('create', 'read', 'update', 'delete') AND p.subject = 'Role')
-                )
-            )
-        )
-    );
-
 -- Insert default roles
 INSERT INTO public.roles (id, name, description, color) VALUES
-    ('1', 'Administrador', 'Acesso completo ao sistema', '#ef4444'),
-    ('2', 'Membro da Equipe', 'Acesso para gerenciar projetos e tarefas', '#3b82f6'),
-    ('3', 'Cliente', 'Acesso somente leitura aos próprios projetos', '#10b981');
+    (gen_random_uuid(), 'Administrador', 'Acesso completo ao sistema', '#ef4444'),
+    (gen_random_uuid(), 'Membro da Equipe', 'Acesso para gerenciar projetos e tarefas', '#3b82f6'),
+    (gen_random_uuid(), 'Cliente', 'Acesso somente leitura aos próprios projetos', '#10b981');

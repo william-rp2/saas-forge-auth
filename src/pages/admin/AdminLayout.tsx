@@ -75,11 +75,11 @@ export default function AdminLayout() {
       {/* Sidebar */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-40 w-64 bg-card border-r border-border
+          fixed inset-y-0 left-0 z-40 w-64 h-screen bg-card border-r border-border
           transform transition-transform duration-300 ease-in-out
           lg:translate-x-0 lg:static lg:inset-0
           ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-          pt-16
+          lg:pt-0 pt-16
         `}
       >
         <div className="flex flex-col h-full">
@@ -129,7 +129,7 @@ export default function AdminLayout() {
       )}
 
       {/* Main content */}
-      <main className="lg:ml-64 min-h-screen pt-0">
+      <main className="lg:ml-64 min-h-screen lg:w-lg lg:absolute lg:top-0 lg:pt-16 sass-width">
         <div className="p-6">
           <Outlet />
         </div>

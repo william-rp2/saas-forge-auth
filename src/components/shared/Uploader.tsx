@@ -34,6 +34,7 @@ import { useEntitlements } from '@/lib/hooks/useEntitlements';
 import { useTeams } from '@/lib/contexts/TeamContext';
 import { mockDb } from '@/mocks/db';
 import { uploadFile, uploadAvatar, uploadDocument, uploadProductAttachment } from '@/lib/actions/upload';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface UploaderFile {
   id: string;
@@ -137,9 +138,9 @@ export function Uploader({
       const formData = new FormData();
       formData.append('file', file);
 
-      // Determinar tipo de upload e chamar Server Action apropriada
       let result;
-      const userId = '1'; // Mock user ID - em produção viria do contexto de auth
+      const { data: loggedUser, error} = await supabase.auth.getUser();
+      const userId = loggedUser.user.id;
       
       if (path.startsWith('avatars/')) {
         result = await uploadAvatar(formData, userId);
@@ -156,18 +157,7 @@ export function Uploader({
         uploadFile.progress = 100;
         uploadFile.status = 'success';
         uploadFile.url = result.url;
-        
-        // Log para desenvolvimento
-        console.log('Real upload completed:', {
-          name: file.name,
-          url: result.url,
-          type: file.type,
-          size: file.size,
-          teamId: currentTeamId,
-          path: path,
-          fileId: result.fileId
-        });
-        
+
         return uploadFile;
       } else {
         throw new Error(result.error || 'Upload failed');

@@ -8,7 +8,7 @@
  * - Form validation and error handling
  */
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
@@ -31,7 +31,8 @@ import { GoogleButton } from '@/components/shared/GoogleButton';
 import { FormDivider } from '@/components/shared/FormDivider';
 import { PlanCard } from '@/components/shared/PlanCard';
 import { registerSchema, type RegisterFormData } from '@/lib/validations';
-import { authApi } from '@/lib/auth';
+import { authApi, RegisterData } from '@/lib/auth';
+import { supabase as supabaseClient } from "../../../integrations/supabase/client";
 
 type SignupStep = 'account' | 'plan' | 'terms';
 
@@ -108,7 +109,62 @@ export const SignupForm = () => {
   /**
    * Handle form submission
    */
-  const onSubmit = async (data: RegisterFormData) => {
+  const onSubmit = async () => {
+    try {
+      setIsLoading(true);
+
+      const formValues = {
+      fullName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      selectedPlan: '',
+      acceptTerms: false,
+      acceptPrivacy: false,
+    }
+
+    const fields: string[] = Object.keys(formValues);
+    fields.forEach(field => {
+      const value = form.control._fields[field]._f["value"];
+      formValues[field] = value;
+    });
+
+    if (!formValues.password || !formValues.confirmPassword || (formValues.password !== formValues.confirmPassword)) {
+      console.error("Password is wrong");
+      toast({
+          variant: 'destructive',
+          title: 'Erro no cadastro',
+          description: "As senhas não conferem, por favor verifique a senha e tente novamente",
+        });
+    }
+
+      const response = await authApi.register({
+        fullName: formValues.fullName,
+        email: formValues.email,
+        password: formValues.password,
+        confirmPassword: formValues.confirmPassword,
+        selectedPlan: formValues.selectedPlan,
+        acceptTerms: formValues.acceptTerms,
+        acceptPrivacy: formValues.acceptPrivacy
+      } as RegisterData);
+
+      toast({
+          title: 'Cadastro realizado com sucesso!',
+          description: response.message,
+        });
+        
+        // Navigate to login page
+        navigate('/auth/login');
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Erro no cadastro',
+        description: 'Ocorreu um erro inesperado. Tente novamente.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+        /*
     try {
       setIsLoading(true);
       
@@ -138,6 +194,7 @@ export const SignupForm = () => {
     } finally {
       setIsLoading(false);
     }
+    */
   };
 
   /**
@@ -146,15 +203,14 @@ export const SignupForm = () => {
   const handleGoogleSignup = async () => {
     try {
       setIsGoogleLoading(true);
-      
+
       const response = await authApi.googleLogin();
-      
+
       if (response.success) {
         toast({
           title: 'Cadastro realizado com sucesso!',
           description: 'Você será redirecionado para o dashboard.',
         });
-        
         navigate('/dashboard');
       } else {
         toast({
@@ -264,7 +320,7 @@ export const SignupForm = () => {
             <div className="space-y-6">
               {/* Google Signup */}
               <GoogleButton
-                onClick={handleGoogleSignup}
+                onClick={ handleGoogleSignup }
                 isLoading={isGoogleLoading}
                 disabled={isLoading}
               >
@@ -517,7 +573,8 @@ export const SignupForm = () => {
                   Voltar
                 </Button>
                 <Button
-                  type="submit"
+                  type="button"
+                  onClick={onSubmit}
                   className="flex-1"
                   disabled={!canSubmit()}
                 >

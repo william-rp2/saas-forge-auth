@@ -12,6 +12,8 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { mockDb } from '@/mocks/db';
+import { ProfilesEntity, ProfilesRepository } from '../repository/profile-repository';
+import { UsersEntity, UsersRepository } from '../repository/users-respository';
 
 export interface UploadResult {
   success: boolean;
@@ -237,6 +239,15 @@ export async function uploadFile(
         documentId = docData?.id;
       }
     }
+
+    const { data: loggedUser, error: loggedUserError } = await supabase.auth.getUser();
+    const user: UsersEntity = await UsersRepository.findByEmail(loggedUser.user.email);
+
+    await ProfilesRepository.updateOrSave(user.id, {
+			user_id: user.id,
+			avatar_url: urlData.publicUrl,
+			updated_at: new Date(),
+		} as ProfilesEntity);
 
     return {
       success: true,

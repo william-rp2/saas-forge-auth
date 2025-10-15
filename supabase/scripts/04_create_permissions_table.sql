@@ -16,31 +16,8 @@ ALTER TABLE public.permissions ADD CONSTRAINT unique_action_subject UNIQUE (acti
 -- Create indexes
 CREATE INDEX idx_permissions_action_subject ON public.permissions(action, subject);
 
--- Enable Row Level Security  
-ALTER TABLE public.permissions ENABLE ROW LEVEL SECURITY;
-
--- RLS Policy - Same as roles (admin access)
-CREATE POLICY "Admins can read permissions" 
-    ON public.permissions FOR SELECT 
-    USING (
-        EXISTS (
-            SELECT 1 FROM public.users u
-            JOIN public.roles r ON u.role_id = r.id
-            WHERE u.auth_user_id = auth.uid()
-            AND EXISTS (
-                SELECT 1 FROM public.role_permissions rp
-                JOIN public.permissions p ON rp.permission_id = p.id
-                WHERE rp.role_id = r.id
-                AND (
-                    (p.action = 'manage' AND p.subject = 'all') OR
-                    (p.action = 'read' AND p.subject = 'Role')
-                )
-            )
-        )
-    );
-
 -- Insert default permissions
 INSERT INTO public.permissions (id, action, subject, name, description) VALUES
-    ('1', 'create', 'Project', 'Criar Projetos', 'Permitir criação de novos projetos'),
-    ('2', 'read', 'Project', 'Visualizar Projetos', 'Permitir visualização de projetos'),
-    ('22', 'manage', 'all', 'Acesso Total', 'Acesso completo ao sistema');
+    (gen_random_uuid(), 'create', 'Project', 'Criar Projetos', 'Permitir criação de novos projetos'),
+    (gen_random_uuid(), 'read', 'Project', 'Visualizar Projetos', 'Permitir visualização de projetos'),
+    (gen_random_uuid(), 'manage', 'all', 'Acesso Total', 'Acesso completo ao sistema');

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useRoutes } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -22,6 +22,9 @@ import {
 import { ArrowLeft, Save } from 'lucide-react';
 import { mockDb, MockFeature, MockLimit } from '@/mocks/db';
 import { useToast } from '@/hooks/use-toast';
+import { FeaturesEntity, FeaturesRepository, PlansFeatureRepository } from '@/lib/repository/features-repository';
+import { LimitsEntity, LimitsRepository, PlanLimitsEntity, PlansLimitsRepository } from '@/lib/repository/limits-repository';
+import { PlansEntity, PlansRepository } from '@/lib/repository/plans-repository';
 
 /**
  * Schema de validação para o formulário de plano
@@ -49,8 +52,8 @@ export default function PlanForm() {
   const { toast } = useToast();
   const isEditing = id !== 'new';
 
-  const [features, setFeatures] = useState<MockFeature[]>([]);
-  const [limits, setLimits] = useState<MockLimit[]>([]);
+  const [features, setFeatures] = useState<FeaturesEntity[]>([]);
+  const [limits, setLimits] = useState<LimitsEntity[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<PlanFormData>({
@@ -72,36 +75,32 @@ export default function PlanForm() {
   const loadData = async () => {
     setIsLoading(true);
     try {
+      //- Find all features and limits
+      const allPlanFeatures: FeaturesEntity[] = await FeaturesRepository.findAll();
+      const allPlanLimits: LimitsEntity[] = await LimitsRepository.findAll();
       // Carrega features e limits disponíveis
-      const featuresData = mockDb.getAllFeatures();
-      const limitsData = mockDb.getAllLimits();
-      setFeatures(featuresData);
-      setLimits(limitsData);
+      setFeatures(allPlanFeatures);
+      setLimits(allPlanLimits);
 
       // Se estiver editando, carrega os dados do plano
       if (isEditing && id) {
-        const plan = mockDb.findPlanById(id);
-        if (plan) {
-          const planFeatures = mockDb.getPlanFeatures(id);
-          const planLimits = mockDb.getPlanLimits(id);
+        const plan: PlansEntity = await PlansRepository.findById(id);
+        const planFeatures: FeaturesEntity[] = await FeaturesRepository.findByPlanId(id);
+        const planLimits: PlanLimitsEntity[] = await PlansLimitsRepository.findByPlanId(id);
 
-          form.reset({
-            name: plan.name,
-            price: plan.price,
-            priceDescription: plan.priceDescription,
-            description: plan.description || '',
-            featureIds: planFeatures.map(f => f.id),
-            limits: planLimits.map(l => ({
-              limitId: l.id,
-              value: l.value,
-            })),
-          });
-        }
+        form.reset({
+          name: plan.name,
+          price: plan.price,
+          priceDescription: plan.price_description,
+          description: plan.description || '',
+          featureIds: planFeatures.map(feature => feature.id),
+          limits: planLimits.map(limit => ({ limitId: limit.limit_id, value: limit.value }))
+        });
       } else {
         // Para novo plano, inicializa os limits com valor 0
         form.setValue(
           'limits',
-          limitsData.map(limit => ({
+          allPlanLimits.map(limit => ({
             limitId: limit.id,
             value: 0,
           }))
@@ -122,34 +121,34 @@ export default function PlanForm() {
     try {
       if (isEditing && id) {
         // Atualiza plano existente
-        mockDb.updatePlan(id, {
+        await PlansRepository.update(id, {
           name: data.name,
           price: data.price,
-          priceDescription: data.priceDescription,
-          description: data.description,
-        });
-        
+          price_description: data.priceDescription,
+          description: data.description
+        } as PlansEntity);
+
         // Atualiza features e limits
-        mockDb.updatePlanFeatures(id, data.featureIds);
-        mockDb.updatePlanLimits(id, data.limits);
-        
+        await PlansFeatureRepository.update(id, data.featureIds);
+        await PlansLimitsRepository.update(id, data.limits.map(limit => ({plan_id: id, limit_id: limit.limitId, value: limit.value })));
+
         toast({
           title: 'Sucesso',
           description: 'Plano atualizado com sucesso.',
         });
       } else {
         // Cria novo plano
-        const newPlan = mockDb.createPlan({
+        const planSaved: PlansEntity = await PlansRepository.save({
           name: data.name,
           price: data.price,
-          priceDescription: data.priceDescription,
-          description: data.description,
-        });
+          price_description: data.priceDescription,
+          description: data.description
+        } as PlansEntity);
         
         // Adiciona features e limits
-        mockDb.updatePlanFeatures(newPlan.id, data.featureIds);
-        mockDb.updatePlanLimits(newPlan.id, data.limits);
-        
+        await PlansFeatureRepository.save(data.featureIds.map((featureId: string) => ({ plan_id: planSaved.id, feature_id: featureId })));
+        await PlansLimitsRepository.save(data.limits.map(limit => ({ plan_id: planSaved.id, limit_id: limit.limitId, value: limit.value })));
+
         toast({
           title: 'Sucesso',
           description: 'Plano criado com sucesso.',
@@ -198,14 +197,6 @@ export default function PlanForm() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={() => navigate('/admin/plans')}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar
-        </Button>
         <div>
           <h1 className="text-2xl font-bold">
             {isEditing ? 'Editar Plano' : 'Criar Novo Plano'}
@@ -314,26 +305,22 @@ export default function PlanForm() {
                     <div className="space-y-4">
                       {features.map((feature) => (
                         <FormField
-                          key={feature.id}
-                          control={form.control}
-                          name="featureIds"
-                          render={({ field }) => {
-                            return (
-                              <FormItem
-                                key={feature.id}
-                                className="flex flex-row items-start space-x-3 space-y-0"
-                              >
+                        key={feature.id}
+                        control={form.control}
+                        name="featureIds"
+                        render={({ field }) => {
+                          return (
+                            <FormItem
+                            key={feature.id}
+                            className="flex flex-row items-start space-x-3 space-y-0"
+                            >
                                 <FormControl>
                                   <Checkbox
                                     checked={field.value?.includes(feature.id)}
                                     onCheckedChange={(checked) => {
                                       return checked
                                         ? field.onChange([...field.value, feature.id])
-                                        : field.onChange(
-                                            field.value?.filter(
-                                              (value) => value !== feature.id
-                                            )
-                                          )
+                                        : field.onChange(field.value?.filter((value) => value !== feature.id))
                                     }}
                                   />
                                 </FormControl>

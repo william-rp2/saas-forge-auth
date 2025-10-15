@@ -16,6 +16,7 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import AccessManagement from "./pages/admin/AccessManagement";
 import PlansPage from "./pages/admin/Plans";
 import PlanEditPage from "./pages/admin/PlanEdit";
+import PlanPreviewPage from "./pages/admin/PlanPreview";
 import ProductsPage from "./pages/admin/Products";
 import SettingsLayout from "./pages/settings/SettingsLayout";
 import Profile from "./pages/settings/Profile";
@@ -28,6 +29,7 @@ import TeamLayout from "./pages/settings/team/TeamLayout";
 import Members from "./pages/settings/team/Members";
 import Invitations from "./pages/settings/team/Invitations";
 import NotificationsPage from "./pages/notifications/NotificationsPage";
+import ProtectedRoute from "./components/features/security/ProtectedRoute";
 
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { TeamProvider } from '@/lib/contexts/TeamContext';
@@ -59,7 +61,7 @@ const App = () => (
                 <Route path="/teams/create" element={<CreateTeamPage />} />
                 
                 {/* Application Routes */}
-                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                 <Route path="/notifications" element={<NotificationsPage />} />
                 
                 {/* Admin Routes */}
@@ -68,6 +70,7 @@ const App = () => (
                   <Route path="access-management" element={<AccessManagement />} />
                   <Route path="plans" element={<PlansPage />} />
                   <Route path="plans/edit/:id" element={<PlanEditPage />} />
+                  <Route path="plans/preview/:id" element={<PlanPreviewPage />} />
                   <Route path="products" element={<ProductsPage />} />
                 </Route>
                 

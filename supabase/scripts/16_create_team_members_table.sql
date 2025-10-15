@@ -10,15 +10,3 @@ CREATE TABLE public.team_members (
 -- Create indexes
 CREATE INDEX idx_team_members_team_id ON public.team_members(team_id);
 CREATE INDEX idx_team_members_user_id ON public.team_members(user_id);
-
--- Add RLS policy
-ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
-
--- Policy: Users can see team members of teams they belong to
-CREATE POLICY "Users can view team members" ON public.team_members
-  FOR SELECT USING (
-    team_id IN (
-      SELECT team_id FROM public.team_members 
-      WHERE user_id = auth.uid()
-    )
-  );

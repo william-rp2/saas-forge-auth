@@ -14,24 +14,3 @@ CREATE TABLE public.team_invitations (
 CREATE INDEX idx_invitations_team_id ON public.team_invitations(team_id);
 CREATE INDEX idx_invitations_email ON public.team_invitations(email);
 CREATE INDEX idx_invitations_status ON public.team_invitations(status);
-
--- Add RLS policy
-ALTER TABLE public.team_invitations ENABLE ROW LEVEL SECURITY;
-
--- Policy: Users can view invitations for teams they are members of
-CREATE POLICY "Users can view team invitations" ON public.team_invitations
-  FOR SELECT USING (
-    team_id IN (
-      SELECT team_id FROM public.team_members 
-      WHERE user_id = auth.uid()
-    )
-  );
-
--- Policy: Only team admins and owners can create invitations
-CREATE POLICY "Team admins can create invitations" ON public.team_invitations
-  FOR INSERT WITH CHECK (
-    team_id IN (
-      SELECT team_id FROM public.team_members 
-      WHERE user_id = auth.uid() AND role IN ('OWNER', 'ADMIN')
-    )
-  );
