@@ -88,5 +88,15 @@ export const PlansFeatureRepository = {
       console.error("An error has occurred while update features plan. UPDATE::ERROR: ", updateError);
       throw updateError;
     }
+  },
+  delete: async (planId: string): Promise<boolean> => {
+    const { data, error } = await supabase.from(RELATION_DATABASE_NAME).delete().eq('plan_id', planId);
+
+    if (error) {
+      console.error("An error has occurred while delete plan limits. ERROR: ", error);
+      return false;
+    }
+
+    return true;
   }
 };

@@ -23,6 +23,8 @@ import { MoreHorizontal, Plus, Edit, Trash2, View } from 'lucide-react';
 import { mockDb, MockPlan } from '@/mocks/db';
 import { useToast } from '@/hooks/use-toast';
 import { PlansEntity, PlansRepository } from '@/lib/repository/plans-repository';
+import { PlansLimitsRepository } from '@/lib/repository/limits-repository';
+import { PlansFeatureRepository } from '@/lib/repository/features-repository';
 
 /**
  * Componente da tabela de dados para gerenciamento de planos
@@ -56,8 +58,11 @@ export default function PlansDataTable() {
 
   const handleDeletePlan = async (planId: string) => {
     try {
-      const success = mockDb.deletePlan(planId);
-      if (success) {
+      const limitSuccess: boolean = await PlansLimitsRepository.delete(planId);
+      const featureSuccess: boolean = await PlansFeatureRepository.delete(planId);
+      const planSuccess: boolean = await PlansRepository.delete(planId);
+
+      if (limitSuccess && featureSuccess && planSuccess) {
         toast({
           title: 'Sucesso',
           description: 'Plano excluído com sucesso.',

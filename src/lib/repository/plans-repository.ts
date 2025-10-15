@@ -51,4 +51,14 @@ export const PlansRepository = {
 
 		return data;
 	},
+	delete: async (id: string): Promise<boolean> => {
+		const { data, error } = await supabaseClient.from(DATABASE_NAME).delete().eq('id', id);
+
+		if (error) {
+			console.error("An error has occurred while delete plan. ERROR: ", error);
+			return false;
+		}
+
+		return true;
+	}
 };
