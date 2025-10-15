@@ -12,8 +12,8 @@ CREATE INDEX idx_features_key ON public.features(key);
 
 -- Insert default features
 INSERT INTO public.features (id, key, name, description) VALUES
-('advanced-reports', 'Relatórios Avançados', 'Acesso a relatórios detalhados e analytics'),
-('api-access', 'Acesso à API', 'Integração via API REST'),
-('priority-support', 'Suporte Prioritário', 'Suporte técnico com prioridade'),
-('custom-branding', 'Marca Personalizada', 'Personalização da marca e logotipo'),
-('unlimited-exports', 'Exportações Ilimitadas', 'Exportar dados sem limitações');
+(gen_random_uuid(), 'advanced-reports', 'Relatórios Avançados', 'Acesso a relatórios detalhados e analytics'),
+(gen_random_uuid(), 'api-access', 'Acesso à API', 'Integração via API REST'),
+(gen_random_uuid(), 'priority-support', 'Suporte Prioritário', 'Suporte técnico com prioridade'),
+(gen_random_uuid(), 'custom-branding', 'Marca Personalizada', 'Personalização da marca e logotipo'),
+(gen_random_uuid(), 'unlimited-exports', 'Exportações Ilimitadas', 'Exportar dados sem limitações');

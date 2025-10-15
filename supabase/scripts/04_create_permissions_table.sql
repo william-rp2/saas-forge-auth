@@ -18,6 +18,6 @@ CREATE INDEX idx_permissions_action_subject ON public.permissions(action, subjec
 
 -- Insert default permissions
 INSERT INTO public.permissions (id, action, subject, name, description) VALUES
-    ('1', 'create', 'Project', 'Criar Projetos', 'Permitir criação de novos projetos'),
-    ('2', 'read', 'Project', 'Visualizar Projetos', 'Permitir visualização de projetos'),
-    ('22', 'manage', 'all', 'Acesso Total', 'Acesso completo ao sistema');
+    (gen_random_uuid(), 'create', 'Project', 'Criar Projetos', 'Permitir criação de novos projetos'),
+    (gen_random_uuid(), 'read', 'Project', 'Visualizar Projetos', 'Permitir visualização de projetos'),
+    (gen_random_uuid(), 'manage', 'all', 'Acesso Total', 'Acesso completo ao sistema');

@@ -16,6 +16,7 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import AccessManagement from "./pages/admin/AccessManagement";
 import PlansPage from "./pages/admin/Plans";
 import PlanEditPage from "./pages/admin/PlanEdit";
+import PlanPreviewPage from "./pages/admin/PlanPreview";
 import ProductsPage from "./pages/admin/Products";
 import SettingsLayout from "./pages/settings/SettingsLayout";
 import Profile from "./pages/settings/Profile";
@@ -69,6 +70,7 @@ const App = () => (
                   <Route path="access-management" element={<AccessManagement />} />
                   <Route path="plans" element={<PlansPage />} />
                   <Route path="plans/edit/:id" element={<PlanEditPage />} />
+                  <Route path="plans/preview/:id" element={<PlanPreviewPage />} />
                   <Route path="products" element={<ProductsPage />} />
                 </Route>
                 

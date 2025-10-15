@@ -19,16 +19,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Plus, Edit, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Plus, Edit, Trash2, View } from 'lucide-react';
 import { mockDb, MockPlan } from '@/mocks/db';
 import { useToast } from '@/hooks/use-toast';
+import { PlansEntity, PlansRepository } from '@/lib/repository/plans-repository';
 
 /**
  * Componente da tabela de dados para gerenciamento de planos
  * Exibe lista de planos com ações de edição e exclusão
  */
 export default function PlansDataTable() {
-  const [plans, setPlans] = useState<MockPlan[]>([]);
+  const [plans, setPlans] = useState<PlansEntity[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -40,10 +41,8 @@ export default function PlansDataTable() {
   const loadPlans = async () => {
     setIsLoading(true);
     try {
-      // Simula delay de API
-      await new Promise(resolve => setTimeout(resolve, 500));
-      const plansData = mockDb.getAllPlans();
-      setPlans(plansData);
+      const plans: PlansEntity[] = await PlansRepository.findAll();
+      setPlans(plans);
     } catch (error) {
       toast({
         title: 'Erro',
@@ -143,7 +142,7 @@ export default function PlansDataTable() {
               </TableRow>
             ) : (
               plans.map((plan) => (
-                <TableRow key={plan.id}>
+                <TableRow key={plan.id} className="cursor-pointer" onClick={() => navigate(`/admin/plans/preview/${plan.id}`)}>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       {plan.name}
@@ -153,7 +152,7 @@ export default function PlansDataTable() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    {formatPrice(plan.price, plan.priceDescription)}
+                    {formatPrice(plan.price, plan.price_description)}
                   </TableCell>
                   <TableCell className="max-w-[300px] truncate">
                     {plan.description || '-'}
@@ -171,6 +170,13 @@ export default function PlansDataTable() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onClick={() => navigate(`/admin/plans/preview/${plan.id}`)}
+                        >
+                          <View className="mr-2 h-4 w-4" />
+                          Visualizar
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => navigate(`/admin/plans/edit/${plan.id}`)}
                         >

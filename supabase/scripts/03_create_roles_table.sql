@@ -22,6 +22,6 @@ CREATE TRIGGER update_roles_updated_at
 
 -- Insert default roles
 INSERT INTO public.roles (id, name, description, color) VALUES
-    ('1', 'Administrador', 'Acesso completo ao sistema', '#ef4444'),
-    ('2', 'Membro da Equipe', 'Acesso para gerenciar projetos e tarefas', '#3b82f6'),
-    ('3', 'Cliente', 'Acesso somente leitura aos próprios projetos', '#10b981');
+    (gen_random_uuid(), 'Administrador', 'Acesso completo ao sistema', '#ef4444'),
+    (gen_random_uuid(), 'Membro da Equipe', 'Acesso para gerenciar projetos e tarefas', '#3b82f6'),
+    (gen_random_uuid(), 'Cliente', 'Acesso somente leitura aos próprios projetos', '#10b981');
