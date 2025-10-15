@@ -138,17 +138,17 @@ export default function PlanForm() {
         });
       } else {
         // Cria novo plano
-        const newPlan = mockDb.createPlan({
+        const planSaved: PlansEntity = await PlansRepository.save({
           name: data.name,
           price: data.price,
-          priceDescription: data.priceDescription,
-          description: data.description,
-        });
+          price_description: data.priceDescription,
+          description: data.description
+        } as PlansEntity);
         
         // Adiciona features e limits
-        mockDb.updatePlanFeatures(newPlan.id, data.featureIds);
-        mockDb.updatePlanLimits(newPlan.id, data.limits);
-        
+        await PlansFeatureRepository.save(data.featureIds.map((featureId: string) => ({ plan_id: planSaved.id, feature_id: featureId })));
+        await PlansLimitsRepository.save(data.limits.map(limit => ({ plan_id: planSaved.id, limit_id: limit.limitId, value: limit.value })));
+
         toast({
           title: 'Sucesso',
           description: 'Plano criado com sucesso.',

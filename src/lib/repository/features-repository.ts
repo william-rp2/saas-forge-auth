@@ -66,15 +66,13 @@ export const PlansFeatureRepository = {
 
     return planFeature;
   },
-  save: async (planFeature: PlanFeaturesEntity): Promise<PlanFeaturesEntity> => {
-    const { data: planFeatureSaved, error } = await supabase.from(RELATION_DATABASE_NAME).insert(planFeature).select().single();
+  save: async (planFeature: PlanFeaturesEntity[]): Promise<void> => {
+    const { data: planFeatureSaved, error } = await supabase.from(RELATION_DATABASE_NAME).insert(planFeature);
 
     if (error) {
       console.error("An error has occurred while save a plan / feature relation. ERROR: ", error);
       throw error;
     }
-
-    return planFeatureSaved;
   },
   update: async (planId: string, featuresIds: string[]): Promise<void> => {
     const { data: deletePlanFeature, error: deletePlanFeatureError } = await supabase.from(RELATION_DATABASE_NAME).delete().eq('plan_id', planId);
